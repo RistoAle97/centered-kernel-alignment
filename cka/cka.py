@@ -1,4 +1,5 @@
-from typing import Literal
+import inspect
+from typing import Callable, Literal
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -25,6 +26,19 @@ class CKA(nn.Module):
         device: str = "cpu",
         kernel: Literal["linear", "rbf"] = "linear",
     ) -> None:
+        """
+        Centered Kernel Alignment (CKA) implementation. Given a set of examples, CKA compares the representations of
+        examples passed through the layers that we want to compare.
+        :param first_model: the first model whose layer features we want to compare.
+        :param second_model: the second model whose layer features we want to compare.
+        :param layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will
+            count for the second model too).
+        :param second_layers: list of layers from the second model under inspection (default=None).
+        :param first_name: name of the first model (default=None).
+        :param second_name: name of the second model (default=None).
+        :param device: the device used during the computation (default="cpu").
+        :param kernel: the type of kernel, can be either "linear" or "rbf" (default="linear").
+        """
         super().__init__()
 
         # Set up the kernel
@@ -99,7 +113,7 @@ class CKA(nn.Module):
         centered_gram_x = center_matrix(gram_x, unbiased)
         centered_gram_y = center_matrix(gram_y, unbiased)
 
-        # Note that we are not actually computing HSIC
+        # This is the final step of computing the Frobenius norm of Y^T * X
         hsic_xy = centered_gram_x.ravel().dot(centered_gram_y.ravel())
 
         # Compute the Frobenius norm for both matrix
@@ -110,7 +124,23 @@ class CKA(nn.Module):
         cka = hsic_xy / (fro_norm_x * fro_norm_y)
         return cka
 
-    def forward(self, dataloader: DataLoader, unbiased: bool = False, rbf_threshold: float = 1.0) -> torch.Tensor:
+    def forward(
+        self,
+        dataloader: DataLoader,
+        unbiased: bool = False,
+        rbf_threshold: float = 1.0,
+        f_extract: Callable[..., dict[str, torch.Tensor]] = None,
+    ) -> torch.Tensor:
+        """
+
+        :param dataloader:
+        :param unbiased:
+        :param rbf_threshold:
+        :param f_extract: the function to apply on the dataloader, this function should take any number and type of
+            inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
+            type of the batch (default=None).
+        :return:
+        """
         self.first_extractor.eval()
         self.second_extractor.eval()
 
@@ -122,11 +152,22 @@ class CKA(nn.Module):
             # Iterate through the dataset
             num_batches = len(dataloader)
             for batch in tqdm(dataloader, desc="| Computing CKA |", total=num_batches):
-                batch = batch[0].to(self.device)
+                if f_extract is not None:
+                    # Apply the provided function and put everything on the device
+                    batch: dict[str, torch.Tensor] = f_extract(batch)
+                    batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
+                elif isinstance(batch, (list, tuple)):
+                    args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" argument
+                    batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
+                else:
+                    raise ValueError(
+                        f"Type {type(batch)} is not supported for the CKA computation. We suggest building a custom"
+                        f"'Dataset' class such that the '__get_item__' method returns a dict[str, torch.Tensor]."
+                    )
 
                 # Do a forward pass for both models
-                first_outputs: dict[str, torch.Tensor] = self.first_extractor(batch)
-                second_outputs: dict[str, torch.Tensor] = self.second_extractor(batch)
+                first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
+                second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
                 for i, (first_out_name, first_out) in enumerate(first_outputs.items()):
                     x = first_out.view(-1, first_out.shape[-1])
                     for j, (second_out_name, second_out) in enumerate(second_outputs.items()):

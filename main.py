@@ -48,7 +48,7 @@ if __name__ == "__main__":
     test_model_new = ManyFF()
     layers_to_observe = [
         "first.linear1", "second.linear1", "third.linear1", "fourth.linear1", "fifth.linear1", "sixth.linear1",
-        "first.linear2", "second.linear2", "third.linear2", "fourth.linear2", "fifth.linear2", "sixth.linear2"
+        # "first.linear2", "second.linear2", "third.linear2", "fourth.linear2", "fifth.linear2", "sixth.linear2",
     ]
     cka = CKA(test_model, test_model_new, layers_to_observe, first_name="test_0", second_name="test_1", device="cuda:0")
     x = torch.randn(128, 512, dtype=torch.float64)
