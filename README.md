@@ -43,4 +43,4 @@ This project is also based on the following works:
 ---
 
 ## :memo: License
-This project is MIT licensed.
+This project is [MIT licensed](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/LICENSE).
