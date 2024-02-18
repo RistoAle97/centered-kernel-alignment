@@ -19,8 +19,8 @@ class CKA(nn.Module):
         self,
         first_model: nn.Module,
         second_model: nn.Module,
-        layers: list[str] | set[str],
-        second_layers: list[str] | set[str] = None,
+        layers: list[str],
+        second_layers: list[str] = None,
         first_name: str = None,
         second_name: str = None,
         device: str = "cpu",
@@ -45,21 +45,30 @@ class CKA(nn.Module):
         assert kernel in ["rbf", "linear"], ValueError("The kernel must be either 'linear' or 'rbf'.")
         self.kernel = kernel
 
-        # Check if no layers were passed and if there are too many of them
-        layers = set(layers)
+        # Check if no layers were passed
         assert layers is not None and len(layers) > 0, ValueError(
             "You can not pass 'None' or an empty list as layers. We suggest using 'get_graph_node_names' from the"
             "'torchvision' package in order to see which layers can be passed."
         )
+
+        # Remove potential duplicates
+        layers = sorted(set(layers), key=layers.index)
+
+        # Check if to many layers were passed
         if len(layers) > 100:
             warn(
                 f"You passed {len(layers)} distinct layers, which is way too high. Consider passing only those"
                 f"layers whose features you are really interested about."
             )
+
+        # Work with the second model's layers if passed
         if second_layers is None or len(second_layers) == 0:
             second_layers = layers.copy()
         else:
-            second_layers = set(second_layers)
+            # Remove potential duplicates
+            second_layers = sorted(set(second_layers), key=second_layers.index)
+
+            # Check if too many layers were passed
             if len(second_layers) > 100:
                 warn(
                     f"You passed {len(second_layers)} distinct layers for the second model, which is way too high."
@@ -68,13 +77,13 @@ class CKA(nn.Module):
 
         # Build the extractors, they work like a normal torch.nn.Module, but their output is a dict containing the
         # features of each layer under their scope.
-        self.first_extractor = create_feature_extractor(first_model, list(layers)).to(device)
-        self.second_extractor = create_feature_extractor(second_model, list(second_layers)).to(device)
+        self.first_extractor = create_feature_extractor(first_model, layers).to(device)
+        self.second_extractor = create_feature_extractor(second_model, second_layers).to(device)
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
         second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
-        if first_name == second_name:
+        if first_name == second_name and first_model is not second_model:
             warn(f"Both models are called {first_name}, beware that it may cause confusion when analyzing the results.")
 
         # Set up the models infos
@@ -132,14 +141,14 @@ class CKA(nn.Module):
         f_extract: Callable[..., dict[str, torch.Tensor]] = None,
     ) -> torch.Tensor:
         """
-
-        :param dataloader:
-        :param unbiased:
-        :param rbf_threshold:
+        Process inputs and computes the CKA matrix.
+        :param dataloader: dataloader that will be used during the computation.
+        :param unbiased: whether to use the unbiased version of CKA (default=False).
+        :param rbf_threshold: the RBF threshold (default=1.0).
         :param f_extract: the function to apply on the dataloader, this function should take any number and type of
             inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
             type of the batch (default=None).
-        :return:
+        :return: the CKA value.
         """
         self.first_extractor.eval()
         self.second_extractor.eval()
@@ -217,8 +226,8 @@ class CKA(nn.Module):
         vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap)
         ax.invert_yaxis()
-        ax.set_xlabel(f"Layers {self.second_model_infos['name']}", fontsize=10)
-        ax.set_ylabel(f"Layers {self.first_model_infos['name']}", fontsize=10)
+        ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
+        ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
 
         # Deal with tick labels
         if show_ticks_labels:
@@ -245,10 +254,10 @@ class CKA(nn.Module):
         # Put the title if passed
         chart_title = title
         if title is not None:
-            ax.set_title(f"{title}", fontsize=10)
+            ax.set_title(f"{title}", fontsize=14)
         else:
             chart_title = f"{self.first_model_infos['name']} vs {self.second_model_infos['name']}"
-            ax.set_title(chart_title, fontsize=10)
+            ax.set_title(chart_title, fontsize=14)
 
         # Set the layout to tight if the corresponding parameter is True
         if use_tight_layout:
