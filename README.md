@@ -31,6 +31,14 @@ Take a look at `main.py` for a simple use case.
 
 ---
 
+## :framed_picture:	Plots
+<div align="center">
+  <img src="https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison_itself.png" alt="Model compared with itself" height=310/>
+  <img src="https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison.png" alt="Model comparison" height=310/>
+</div>
+
+---
+
 ## :books: Bibliography
 [1] Kornblith, Simon, et al. ["Similarity of neural network representations revisited."](https://arxiv.org/abs/1905.00414) *International Conference on Machine Learning*. PMLR, 2019.
 

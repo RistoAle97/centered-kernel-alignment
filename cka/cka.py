@@ -188,7 +188,7 @@ class CKA(nn.Module):
 
         return cka
 
-    def plot_results(
+    def plot_cka(
         self,
         cka_matrix: torch.Tensor,
         save_path: str = None,

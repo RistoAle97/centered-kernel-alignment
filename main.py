@@ -52,10 +52,10 @@ if __name__ == "__main__":
     ]
     cka = CKA(
         first_model=test_model,
-        second_model=test_model_new,
+        second_model=test_model,
         layers=layers_to_observe,
-        first_name="ManyFF_0",
-        second_name="ManyFF_1",
+        first_name="ManyFF",
+        second_name="ManyFF",
         device="cuda:0",
     )
     x = torch.randn(128, 512, dtype=torch.float64)
@@ -64,9 +64,9 @@ if __name__ == "__main__":
     dataset = TensorDataset(x_new)
     dataloader = DataLoader(dataset, batch_size=2, num_workers=0)
     cka_matrix = cka(dataloader, False)
-    cka.plot_results(
+    cka.plot_cka(
         cka_matrix=cka_matrix,
-        # title="Model compared with itself, no training",
+        title="Model compared with itself",
         show_ticks_labels=True,
         short_tick_labels_splits=2,
         use_tight_layout=True,
