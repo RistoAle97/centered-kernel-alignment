@@ -32,10 +32,9 @@ Take a look at `main.py` for a simple use case.
 ---
 
 ## :framed_picture:	Plots
-<div align="center">
-  <img src="https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison_itself.png" alt="Model compared with itself" height=310/>
-  <img src="https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison.png" alt="Model comparison" height=310/>
-</div>
+Model compared with itself             |  Different models compared
+:-------------------------:|:-------------------------:
+![Model compared with itself](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison_itself.png)  |  ![Model comparison](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison.png)
 
 ---
 
