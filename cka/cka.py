@@ -13,7 +13,7 @@ from tqdm import tqdm
 from .utils import linear_kernel, rbf_kernel, center_matrix
 
 
-class CKA(nn.Module):
+class CKA:
 
     def __init__(
         self,
@@ -21,9 +21,11 @@ class CKA(nn.Module):
         second_model: nn.Module,
         layers: list[str],
         second_layers: list[str] = None,
+        first_leaf_modules: list[type[nn.Module]] = None,
+        second_leaf_modules: list[type[nn.Module]] = None,
         first_name: str = None,
         second_name: str = None,
-        device: str = "cpu",
+        device: str | torch.device = "cpu",
         kernel: Literal["linear", "rbf"] = "linear",
     ) -> None:
         """
@@ -34,12 +36,19 @@ class CKA(nn.Module):
         :param layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will
             count for the second model too).
         :param second_layers: list of layers from the second model under inspection (default=None).
+        :param first_leaf_modules: list of problematic layers that will not be traced by the first extractor
+            (default=None).
+        :param second_leaf_modules: list of problematic layers that will not be traced by the second extractor
+            (default=None).
         :param first_name: name of the first model (default=None).
         :param second_name: name of the second model (default=None).
         :param device: the device used during the computation (default="cpu").
         :param kernel: the type of kernel, can be either "linear" or "rbf" (default="linear").
         """
         super().__init__()
+
+        # Set up the device
+        self.device = torch.device(device)
 
         # Set up the kernel
         assert kernel in ["rbf", "linear"], ValueError("The kernel must be either 'linear' or 'rbf'.")
@@ -75,10 +84,22 @@ class CKA(nn.Module):
                     f"Consider passing only those layers whose features you are really interested about."
                 )
 
+        # Deal with the non-traceable layers
+        first_tracer_kwargs = {"leaf_modules": first_leaf_modules} if first_leaf_modules is not None else None
+        second_tracer_kwargs = {"leaf_modules": second_leaf_modules} if second_leaf_modules is not None else None
+
         # Build the extractors, they work like a normal torch.nn.Module, but their output is a dict containing the
         # features of each layer under their scope.
-        self.first_extractor = create_feature_extractor(first_model, layers).to(device)
-        self.second_extractor = create_feature_extractor(second_model, second_layers).to(device)
+        self.first_extractor = create_feature_extractor(
+            model=first_model,
+            return_nodes=layers,
+            tracer_kwargs=first_tracer_kwargs,
+        ).to(self.device)
+        self.second_extractor = create_feature_extractor(
+            model=second_model,
+            return_nodes=second_layers,
+            tracer_kwargs=second_tracer_kwargs,
+        ).to(self.device)
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
@@ -89,9 +110,6 @@ class CKA(nn.Module):
         # Set up the models infos
         self.first_model_infos = {"name": first_name, "layers": layers}
         self.second_model_infos = {"name": second_name, "layers": second_layers}
-
-        # At last, save the device used during the computation
-        self.device = torch.device(device)
 
     def compute_cka(
         self, x: torch.Tensor, y: torch.Tensor, unbiased: bool = False, rbf_threshold: float = 1.0
@@ -107,7 +125,7 @@ class CKA(nn.Module):
         """
         # We need to change the dtype of the tensors for a better precision
         x = x.type(torch.float64) if not x.dtype == torch.float64 else x
-        y = y.type(torch.float64) if not x.dtype == torch.float64 else y
+        y = y.type(torch.float64) if not y.dtype == torch.float64 else y
 
         # Apply the kernel to the matrices and center them
         if self.kernel == "linear":
@@ -125,7 +143,7 @@ class CKA(nn.Module):
         # This is the final step of computing the Frobenius norm of Y^T * X
         hsic_xy = centered_gram_x.ravel().dot(centered_gram_y.ravel())
 
-        # Compute the Frobenius norm for both matrix
+        # Compute the Frobenius norm for both matrices
         fro_norm_x = torch.linalg.norm(centered_gram_x, ord="fro")
         fro_norm_y = torch.linalg.norm(centered_gram_y, ord="fro")
 
@@ -133,12 +151,13 @@ class CKA(nn.Module):
         cka = hsic_xy / (fro_norm_x * fro_norm_y)
         return cka
 
-    def forward(
+    def __call__(
         self,
         dataloader: DataLoader,
         unbiased: bool = False,
         rbf_threshold: float = 1.0,
         f_extract: Callable[..., dict[str, torch.Tensor]] = None,
+        f_args: dict[str, ...] = None,
     ) -> torch.Tensor:
         """
         Process inputs and computes the CKA matrix.
@@ -148,6 +167,7 @@ class CKA(nn.Module):
         :param f_extract: the function to apply on the dataloader, this function should take any number and type of
             inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
             type of the batch (default=None).
+        :param f_args: the arguments passed to the f_extract function (default=None).
         :return: the CKA value.
         """
         self.first_extractor.eval()
@@ -163,7 +183,11 @@ class CKA(nn.Module):
             for batch in tqdm(dataloader, desc="| Computing CKA |", total=num_batches):
                 if f_extract is not None:
                     # Apply the provided function and put everything on the device
-                    batch: dict[str, torch.Tensor] = f_extract(batch)
+                    if f_args is not None:
+                        batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
+                    else:
+                        batch: dict[str, torch.Tensor] = f_extract(batch)
+
                     batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                 elif isinstance(batch, (list, tuple)):
                     args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" argument
