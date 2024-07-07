@@ -1,5 +1,6 @@
 black>=24.1.1
 matplotlib>=3.8.0
+numpy>=1.26.4
 seaborn>=0.12.2
 tqdm>=4.66.1
 torch>=2.1.0

@@ -3,6 +3,7 @@ from typing import Callable, Literal
 from warnings import warn
 
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sn
 import torch
 from torch import nn
@@ -10,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
-from .utils import linear_kernel, rbf_kernel, center_matrix
+from .utils import batched_cka
 
 
 class CKA:
@@ -111,59 +112,16 @@ class CKA:
         self.first_model_infos = {"name": first_name, "layers": layers}
         self.second_model_infos = {"name": second_name, "layers": second_layers}
 
-    def compute_cka(
-        self, x: torch.Tensor, y: torch.Tensor, unbiased: bool = False, rbf_threshold: float = 1.0
-    ) -> torch.Tensor:
-        """
-        Compute the Centered Kernel Alignment between two given matrices. Adapted from the one made by Kornblith et al.
-        https://github.com/google-research/google-research/tree/master/representation_similarity.
-        :param x: tensor of shape (n, j).
-        :param y: tensor of shape (n, k).
-        :param unbiased: whether to use the unbiased version of CKA (default=False).
-        :param rbf_threshold: the threshold used by the RBF kernel (default=1.0).
-        :return: a float in [0, 1] that is the CKA value between the two given matrices.
-        """
-        # We need to change the dtype of the tensors for a better precision
-        x = x.type(torch.float64) if not x.dtype == torch.float64 else x
-        y = y.type(torch.float64) if not y.dtype == torch.float64 else y
-
-        # Apply the kernel to the matrices and center them
-        if self.kernel == "linear":
-            f_kernel = linear_kernel
-            kernel_other_args = {}
-        else:
-            f_kernel = rbf_kernel
-            kernel_other_args = {"threshold": rbf_threshold}
-
-        gram_x = f_kernel(x, **kernel_other_args)
-        gram_y = f_kernel(y, **kernel_other_args)
-        centered_gram_x = center_matrix(gram_x, unbiased)
-        centered_gram_y = center_matrix(gram_y, unbiased)
-
-        # This is the final step of computing the Frobenius norm of Y^T * X
-        hsic_xy = centered_gram_x.ravel().dot(centered_gram_y.ravel())
-
-        # Compute the Frobenius norm for both matrices
-        fro_norm_x = torch.linalg.norm(centered_gram_x, ord="fro")
-        fro_norm_y = torch.linalg.norm(centered_gram_y, ord="fro")
-
-        # Finally, compute CKA
-        cka = hsic_xy / (fro_norm_x * fro_norm_y)
-        return cka
-
     def __call__(
         self,
         dataloader: DataLoader,
-        unbiased: bool = False,
-        rbf_threshold: float = 1.0,
         f_extract: Callable[..., dict[str, torch.Tensor]] = None,
         f_args: dict[str, ...] = None,
     ) -> torch.Tensor:
         """
-        Process inputs and computes the CKA matrix.
+        Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
+        Nguyen et al. (https://arxiv.org/abs/2010.15327).
         :param dataloader: dataloader that will be used during the computation.
-        :param unbiased: whether to use the unbiased version of CKA (default=False).
-        :param rbf_threshold: the RBF threshold (default=1.0).
         :param f_extract: the function to apply on the dataloader, this function should take any number and type of
             inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
             type of the batch (default=None).
@@ -201,11 +159,11 @@ class CKA:
                 # Do a forward pass for both models
                 first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
                 second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
-                for i, (first_out_name, first_out) in enumerate(first_outputs.items()):
-                    x = first_out.view(-1, first_out.shape[-1])
-                    for j, (second_out_name, second_out) in enumerate(second_outputs.items()):
-                        y = second_out.view(-1, second_out.shape[-1])
-                        cka[i, j] += self.compute_cka(x, y, unbiased, rbf_threshold) / num_batches
+
+                # Compute the CKA values for each output pair
+                for i, (_, x) in enumerate(first_outputs.items()):
+                    for j, (_, y) in enumerate(second_outputs.items()):
+                        cka[i, j] = batched_cka(x, y)
 
         # One last check
         assert not torch.isnan(cka).any(), "CKA computation resulted in NANs"
@@ -248,7 +206,12 @@ class CKA:
         cmap = kwargs.get("cmap", "magma")
         vmin = min(vmin, torch.min(cka_matrix).item()) if vmin is not None else vmin
         vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
-        ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap)
+        if set(self.first_model_infos["layers"]) == set(self.second_model_infos["layers"]):
+            mask = np.tril(np.ones_like(cka_matrix.cpu(), dtype=bool), k=-1)
+        else:
+            mask = None
+
+        ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
         ax.invert_yaxis()
         ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
         ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
