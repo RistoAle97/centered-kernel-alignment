@@ -57,8 +57,7 @@ def cka_base(
 def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
     Compute the minibatch version of CKA from Nguyen et al. (https://arxiv.org/abs/2010.15327). This computation is
-    performed with linear kernel and by calculating HSIC_1, it is based on the one implemented by
-    https://github.com/numpee/CKA.pytorch/blob/07874ec7e219ad29a29ee8d5ebdada0e1156cf9f/cka.py#L107.
+    performed with linear kernel and by calculating HSIC_1.
     :param x: tensor of shape (bsz, n, j).
     :param y: tensor of shape (bsz, n, k).
     :return: a float in [0, 1] that is the CKA value between the two given tensors.
