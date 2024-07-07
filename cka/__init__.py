@@ -1,4 +1,6 @@
 from .cka import CKA
-from .utils import linear_kernel, rbf_kernel, center_gram_matrix, hsic, cka_base
+from .core import cka_base, cka_batch
+from .hsic import hsic0, hsic1
+from .utils import center_gram_matrix, linear_kernel, rbf_kernel
 
-__all__ = ["center_gram_matrix", "cka_base", "hsic", "linear_kernel", "rbf_kernel", "CKA"]
+__all__ = ["center_gram_matrix", "cka_base", "cka_batch", "hsic0", "hsic1", "linear_kernel", "rbf_kernel", "CKA"]

@@ -58,13 +58,13 @@ if __name__ == "__main__":
         second_name="ManyFF_new",
         device="cuda:0",
     )
-    x_new = torch.randn(32, 128, 512, dtype=torch.float64)
+    x_new = torch.randn(128, 256, 512, dtype=torch.float64)
     dataset = TensorDataset(x_new)
-    dataloader = DataLoader(dataset, batch_size=16, num_workers=0, drop_last=True)
+    dataloader = DataLoader(dataset, batch_size=32, num_workers=0, drop_last=True)
     cka_matrix = cka(dataloader)
     cka.plot_cka(
         cka_matrix=cka_matrix,
-        title=f"Model comparison, bsz {dataloader.batch_size}",
+        title=f"Model compared with itself",
         show_ticks_labels=True,
         short_tick_labels_splits=2,
         use_tight_layout=True,

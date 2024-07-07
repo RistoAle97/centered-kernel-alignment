@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
-from .utils import batched_cka
+from .core import cka_batch
 
 
 class CKA:
@@ -163,7 +163,7 @@ class CKA:
                 # Compute the CKA values for each output pair
                 for i, (_, x) in enumerate(first_outputs.items()):
                     for j, (_, y) in enumerate(second_outputs.items()):
-                        cka[i, j] = batched_cka(x, y)
+                        cka[i, j] = cka_batch(x, y)
 
         # One last check
         assert not torch.isnan(cka).any(), "CKA computation resulted in NANs"
@@ -195,7 +195,6 @@ class CKA:
         :param use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
         :param show_annotations: whether to show the annotations on the heatmap (default=True).
         :param show_img: whether to show the plot (default=True).
-        :return:
         """
         # Build the heatmap
         vmin: float | None = kwargs.get("vmin", None)
