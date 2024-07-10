@@ -1,5 +1,6 @@
 import inspect
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -21,11 +22,11 @@ class CKA:
         first_model: nn.Module,
         second_model: nn.Module,
         layers: list[str],
-        second_layers: list[str] = None,
-        first_leaf_modules: list[type[nn.Module]] = None,
-        second_leaf_modules: list[type[nn.Module]] = None,
-        first_name: str = None,
-        second_name: str = None,
+        second_layers: list[str] | None = None,
+        first_leaf_modules: list[type[nn.Module]] | None = None,
+        second_leaf_modules: list[type[nn.Module]] | None = None,
+        first_name: str | None = None,
+        second_name: str | None = None,
         device: str | torch.device = "cpu",
         kernel: Literal["linear", "rbf"] = "linear",
     ) -> None:
@@ -52,14 +53,17 @@ class CKA:
         self.device = torch.device(device)
 
         # Set up the kernel
-        assert kernel in ["rbf", "linear"], ValueError("The kernel must be either 'linear' or 'rbf'.")
+        if kernel not in ["rbf", "linear"]:
+            raise ValueError("The kernel must be either 'linear' or 'rbf'.")
+
         self.kernel = kernel
 
         # Check if no layers were passed
-        assert layers is not None and len(layers) > 0, ValueError(
-            "You can not pass 'None' or an empty list as layers. We suggest using 'get_graph_node_names' from the"
-            "'torchvision' package in order to see which layers can be passed."
-        )
+        if layers is None or len(layers) == 0:
+            raise ValueError(
+                "You can not pass 'None' or an empty list as layers. We suggest using 'get_graph_node_names' from the"
+                "'torchvision' package in order to see which layers can be passed."
+            )
 
         # Remove potential duplicates
         layers = sorted(set(layers), key=layers.index)
@@ -115,8 +119,8 @@ class CKA:
     def __call__(
         self,
         dataloader: DataLoader,
-        f_extract: Callable[..., dict[str, torch.Tensor]] = None,
-        f_args: dict[str, ...] = None,
+        f_extract: Callable[..., dict[str, torch.Tensor]] | None = None,
+        f_args: dict[str, ...] | None = None,
     ) -> torch.Tensor:
         """
         Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
@@ -147,7 +151,7 @@ class CKA:
                         batch: dict[str, torch.Tensor] = f_extract(batch)
 
                     batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
-                elif isinstance(batch, (list, tuple)):
+                elif isinstance(batch, list | tuple):
                     args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" argument
                     batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
                 else:
@@ -166,20 +170,22 @@ class CKA:
                         cka[i, j] = cka_batch(x, y)
 
         # One last check
-        assert not torch.isnan(cka).any(), "CKA computation resulted in NANs"
+        if torch.isnan(cka).any():
+            raise "CKA computation resulted in NANs"
 
         return cka
 
     def plot_cka(
         self,
         cka_matrix: torch.Tensor,
-        save_path: str = None,
-        title: str = None,
+        save_path: str | None = None,
+        title: str | None = None,
         show_ticks_labels: bool = False,
         short_tick_labels_splits: int | None = None,
         use_tight_layout: bool = True,
         show_annotations: bool = True,
         show_img: bool = True,
+        show_half_heatmap: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -195,8 +201,10 @@ class CKA:
         :param use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
         :param show_annotations: whether to show the annotations on the heatmap (default=True).
         :param show_img: whether to show the plot (default=True).
+        :param show_half_heatmap: whether to mask the upper left part of the heatmap since those valued are duplicates
+            (default=False).
         """
-        # Build the heatmap
+        # Deal with some arguments
         vmin: float | None = kwargs.get("vmin", None)
         vmax: float | None = kwargs.get("vmax", None)
         if (vmin is not None) ^ (vmax is not None):
@@ -205,11 +213,9 @@ class CKA:
         cmap = kwargs.get("cmap", "magma")
         vmin = min(vmin, torch.min(cka_matrix).item()) if vmin is not None else vmin
         vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
-        if set(self.first_model_infos["layers"]) == set(self.second_model_infos["layers"]):
-            mask = np.tril(np.ones_like(cka_matrix.cpu(), dtype=bool), k=-1)
-        else:
-            mask = None
+        mask = np.tril(np.ones_like(cka_matrix.cpu(), dtype=bool), k=-1) if show_half_heatmap else None
 
+        # Build the heatmap
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
         ax.invert_yaxis()
         ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
@@ -242,7 +248,7 @@ class CKA:
         if title is not None:
             ax.set_title(f"{title}", fontsize=14)
         else:
-            chart_title = f"{self.first_model_infos['name']} vs {self.second_model_infos['name']}"
+            chart_title = f"{self.first_model_infos["name"]} vs {self.second_model_infos["name"]}"
             ax.set_title(chart_title, fontsize=14)
 
         # Set the layout to tight if the corresponding parameter is True

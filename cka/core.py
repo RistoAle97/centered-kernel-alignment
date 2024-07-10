@@ -27,8 +27,11 @@ def cka_base(
         (default="fro_norm").
     :return: a float in [0, 1] that is the CKA value between the two given matrices.
     """
-    assert kernel in ["linear", "rbf"]
-    assert method in ["hsic", "fro_norm"]
+    if kernel not in ["linear", "rbf"]:
+        raise ValueError("The chosen kernel must be either 'linear' or 'rbf'.")
+
+    if method not in ["hsic", "fro_norm"]:
+        raise ValueError("The chosen method must be either 'hsic' or 'fro_norm'.")
 
     x = x.type(torch.float64) if not x.dtype == torch.float64 else x
     y = y.type(torch.float64) if not y.dtype == torch.float64 else y

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     cka_matrix = cka(dataloader)
     cka.plot_cka(
         cka_matrix=cka_matrix,
-        title=f"Model compared with itself",
+        title=f"Model {cka.first_model_infos["name"]} compared with itself",
         show_ticks_labels=True,
         short_tick_labels_splits=2,
         use_tight_layout=True,

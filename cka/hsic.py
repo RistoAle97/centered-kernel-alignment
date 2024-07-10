@@ -35,7 +35,9 @@ def hsic1(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
     :param gram_y: a tensor of shape (bsz, n, n).
     :return: the unbiased Hilbert-Schmidt Independence Criterion values.
     """
-    assert len(gram_x.size()) == 3 and gram_x.size() == gram_y.size()
+    if len(gram_x.size()) != 3 or gram_x.size() != gram_y.size():
+        raise ValueError("Invalid size for one of the two input tensors.")
+
     n = gram_x.shape[-1]
     gram_x = gram_x.clone()
     gram_y = gram_y.clone()
@@ -62,5 +64,5 @@ def hsic1(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
     main_term = trace_kl + middle_term - right_term
 
     # Compute the hsic values
-    out = main_term / (n ** 2 - 3 * n)
+    out = main_term / (n**2 - 3 * n)
     return out.squeeze(-1).squeeze(-1)

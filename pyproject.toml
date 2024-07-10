@@ -1,6 +1,20 @@
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312"]
 skip-string-normalization = true
 diff = true
 color = true
+
+[tool.ruff]
+include = ["cka/**/*.py", "examples/**/*py", "pyproject.toml", "*.ipynb"]
+line-length = 120
+output-format = "grouped"
+src = ["cka"]
+target-version = "py310"
+
+[tool.ruff.lint]
+ignore = ["E111", "E114", "E117", "E501"]
+select = ["E", "F", "I", "N", "RUF", "UP"]
+
+[tool.ruff.lint.isort]
+force-single-line = false
