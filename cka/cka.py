@@ -145,11 +145,8 @@ class CKA:
             for batch in tqdm(dataloader, desc="| Computing CKA |", total=num_batches):
                 if f_extract is not None:
                     # Apply the provided function and put everything on the device
-                    if f_args is not None:
-                        batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
-                    else:
-                        batch: dict[str, torch.Tensor] = f_extract(batch)
-
+                    f_extract = {} if f_extract is None else f_extract
+                    batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
                     batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                 elif isinstance(batch, list | tuple):
                     args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" argument
@@ -218,8 +215,8 @@ class CKA:
         # Build the heatmap
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
         ax.invert_yaxis()
-        ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
-        ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
+        ax.set_xlabel(f"{self.second_model_infos["name"]} layers", fontsize=12)
+        ax.set_ylabel(f"{self.first_model_infos["name"]} layers", fontsize=12)
 
         # Deal with tick labels
         if show_ticks_labels:
@@ -244,12 +241,11 @@ class CKA:
             plt.yticks(rotation=0)
 
         # Put the title if passed
-        chart_title = title
         if title is not None:
-            ax.set_title(f"{title}", fontsize=14)
+            ax.set_title(title, fontsize=14)
         else:
-            chart_title = f"{self.first_model_infos["name"]} vs {self.second_model_infos["name"]}"
-            ax.set_title(chart_title, fontsize=14)
+            title = f"{self.first_model_infos["name"]} vs {self.second_model_infos["name"]}"
+            ax.set_title(title, fontsize=14)
 
         # Set the layout to tight if the corresponding parameter is True
         if use_tight_layout:
@@ -257,8 +253,8 @@ class CKA:
 
         # Save the plot to the specified path if defined
         if save_path is not None:
-            chart_title = chart_title.replace("/", "-")
-            path_rel = f"{save_path}/{chart_title}.png"
+            title = title.replace("/", "-")
+            path_rel = f"{save_path}/{title}.png"
             plt.savefig(path_rel, dpi=400, bbox_inches="tight")
 
         # Show the image if the user chooses to do so

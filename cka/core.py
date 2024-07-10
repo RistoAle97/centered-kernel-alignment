@@ -13,7 +13,7 @@ def cka_base(
     unbiased: bool = False,
     threshold: float = 1.0,
     method: Literal["fro_norm", "hsic"] = "fro_norm",
-) -> float:
+) -> torch.Tensor:
     """
     Compute the Centered Kernel Alignment between two given matrices. Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
@@ -25,7 +25,7 @@ def cka_base(
     :param method: the method used to compute the CKA value, must be "fro_norm" (Frobenius norm) or "hsic"
         (Hilbert-Schmidt Independence Criterion). Note that the choice does not influence the output
         (default="fro_norm").
-    :return: a float in [0, 1] that is the CKA value between the two given matrices.
+    :return: a float tensor in [0, 1] that is the CKA value between the two given matrices.
     """
     if kernel not in ["linear", "rbf"]:
         raise ValueError("The chosen kernel must be either 'linear' or 'rbf'.")
@@ -63,7 +63,7 @@ def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     performed with linear kernel and by calculating HSIC_1.
     :param x: tensor of shape (bsz, n, j).
     :param y: tensor of shape (bsz, n, k).
-    :return: a float in [0, 1] that is the CKA value between the two given tensors.
+    :return: a float tensor in [0, 1] that is the CKA value between the two given tensors.
     """
     x = x.type(torch.float64) if not x.dtype == torch.float64 else x
     y = y.type(torch.float64) if not y.dtype == torch.float64 else y
