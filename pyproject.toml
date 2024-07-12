@@ -18,3 +18,4 @@ select = ["E", "F", "I", "N", "RUF", "UP"]
 
 [tool.ruff.lint.isort]
 force-single-line = false
+lines-after-imports = 2
