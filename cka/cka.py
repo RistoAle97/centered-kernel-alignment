@@ -16,7 +16,6 @@ from .core import cka_batch
 
 
 class CKA:
-
     def __init__(
         self,
         first_model: nn.Module,
@@ -61,8 +60,8 @@ class CKA:
         # Check if no layers were passed
         if layers is None or len(layers) == 0:
             raise ValueError(
-                "You can not pass 'None' or an empty list as layers. We suggest using 'get_graph_node_names' from the"
-                "'torchvision' package in order to see which layers can be passed."
+                "You can not pass 'None' or an empty list as layers. We suggest using 'first_model.named_modules()'"
+                "in order to see which layers can be passed."
             )
 
         # Remove potential duplicates
@@ -99,11 +98,13 @@ class CKA:
             model=first_model,
             return_nodes=layers,
             tracer_kwargs=first_tracer_kwargs,
+            # concrete_args={"input_embeds": None},
         ).to(self.device)
         self.second_extractor = create_feature_extractor(
             model=second_model,
             return_nodes=second_layers,
             tracer_kwargs=second_tracer_kwargs,
+            # concrete_args={"input_embeds": None},
         ).to(self.device)
 
         # Manage the models names
@@ -215,8 +216,8 @@ class CKA:
         # Build the heatmap
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
         ax.invert_yaxis()
-        ax.set_xlabel(f"{self.second_model_infos["name"]} layers", fontsize=12)
-        ax.set_ylabel(f"{self.first_model_infos["name"]} layers", fontsize=12)
+        ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
+        ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
 
         # Deal with tick labels
         if show_ticks_labels:
@@ -244,7 +245,7 @@ class CKA:
         if title is not None:
             ax.set_title(title, fontsize=14)
         else:
-            title = f"{self.first_model_infos["name"]} vs {self.second_model_infos["name"]}"
+            title = f"{self.first_model_infos['name']} vs {self.second_model_infos['name']}"
             ax.set_title(title, fontsize=14)
 
         # Set the layout to tight if the corresponding parameter is True

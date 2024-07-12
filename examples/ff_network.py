@@ -102,7 +102,7 @@ if __name__ == "__main__":
     }
     cka_same_model.plot_cka(
         cka_matrix=cka_matrix_same,
-        title=f"Model {cka_same_model.first_model_infos["name"]} compared with itself",
+        title=f"Model {cka_same_model.first_model_infos['name']} compared with itself",
         **plot_parameters,
     )
     cka_different_models.plot_cka(cka_matrix=cka_matrix_different, **plot_parameters)
