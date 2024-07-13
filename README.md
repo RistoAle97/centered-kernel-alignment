@@ -1,7 +1,7 @@
 <div align="center">
 
-# CKA Pytorch
-**CKA (Centered Kernel Alignment) in Pytorch.**
+# :robot: CKA PyTorch :robot:
+**CKA (Centered Kernel Alignment) in PyTorch.**
 
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
 [![Pytorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://github.com/pytorch/pytorch)
