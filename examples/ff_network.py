@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     # Build the dataset from a random three-dimensional tensor and define the dataloader
     dataset = TensorDataset(torch.randn(128, 256, 512, dtype=torch.float64))
-    dataloader = DataLoader(dataset, batch_size=8, num_workers=0, drop_last=True)
+    dataloader = DataLoader(dataset, batch_size=8, num_workers=8, shuffle=True)
 
     # Compute the CKA values for both scenarios
     cka_matrix_same = cka_same_model(dataloader)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     # Plot the CKA values
     plot_parameters = {
-        "show_tick_labels": True,
+        "show_ticks_labels": True,
         "short_tick_labels_splits": 2,
         "use_tight_layout": True,
         "show_half_heatmap": True,
