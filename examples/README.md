@@ -6,7 +6,7 @@
 ---
 </div>
 
-## :hammer_and_wrench: Examples
+## :pushpin: Examples
 > [!CAUTION]
 > Currently, HuggingFace models will work with this package since `create_feature_extractor` needs a very specific parameter (`concrete_args`) that will be added in the next release of torchvision (0.1.9 or 0.2.0).
 > If you are working with a custom transformer architecture you should, at least, set `first_leaf_modules=[YourPositionalEncoderClass]` and `second_leaf_modules=[YourPositinalEncoderClass]` to avoid throwing an exception.

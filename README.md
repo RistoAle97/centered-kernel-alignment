@@ -36,7 +36,7 @@ This project requires python >= 3.10. All the necessary packages can be installe
 ```bash
 pip install -r requirements.txt
 ```
-Take a look at `main.py` for a simple use case.
+Take a look at the `examples` directory to understand how to compute CKA in different scenarios.
 
 ---
 
@@ -54,10 +54,10 @@ Model compared with itself             |  Different models compared
 
 [3] Nguyen, Thao, Maithra Raghu, and Simon Kornblith. ["Do wide and deep networks learn the same things? uncovering how neural network representations vary with width and depth."](https://arxiv.org/abs/2010.15327) *arXiv preprint* arXiv:2010.15327 (2020).
 
-This project is also based on the following works:
-- https://github.com/google-research/google-research/tree/master/representation_similarity (original implementantion).
-- https://github.com/AntixK/PyTorch-Model-Compare (nice PyTorch implementation that employs hooks).
-- https://github.com/numpee/CKA.pytorch (batch implementation of $HSIC_1$).
+This project is also based on the following repositories:
+- [representation_similarity](https://github.com/google-research/google-research/tree/master/representation_similarity) (original implementation).
+- [PyTorch-Model-Compare](https://github.com/AntixK/PyTorch-Model-Compare) (nice PyTorch implementation that employs hooks).
+- [CKA.pytorch](https://github.com/numpee/CKA.pytorch) (minibatch version of CKA and useful batched implementation of $HSIC_1$).
 
 ---
 
