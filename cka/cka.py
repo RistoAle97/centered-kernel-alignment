@@ -8,7 +8,7 @@ import numpy as np
 import seaborn as sn
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
@@ -16,7 +16,6 @@ from .core import cka_batch
 
 
 class CKA:
-
     def __init__(
         self,
         first_model: nn.Module,
@@ -61,8 +60,8 @@ class CKA:
         # Check if no layers were passed
         if layers is None or len(layers) == 0:
             raise ValueError(
-                "You can not pass 'None' or an empty list as layers. We suggest using 'get_graph_node_names' from the"
-                "'torchvision' package in order to see which layers can be passed."
+                "You can not pass 'None' or an empty list as layers. We suggest using 'first_model.named_modules()'"
+                "in order to see which layers can be passed."
             )
 
         # Remove potential duplicates
@@ -99,11 +98,13 @@ class CKA:
             model=first_model,
             return_nodes=layers,
             tracer_kwargs=first_tracer_kwargs,
+            # concrete_args={"input_embeds": None},
         ).to(self.device)
         self.second_extractor = create_feature_extractor(
             model=second_model,
             return_nodes=second_layers,
             tracer_kwargs=second_tracer_kwargs,
+            # concrete_args={"input_embeds": None},
         ).to(self.device)
 
         # Manage the models names
@@ -119,6 +120,7 @@ class CKA:
     def __call__(
         self,
         dataloader: DataLoader,
+        epochs: int = 10,
         f_extract: Callable[..., dict[str, torch.Tensor]] | None = None,
         f_args: dict[str, ...] | None = None,
     ) -> torch.Tensor:
@@ -126,45 +128,62 @@ class CKA:
         Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
         Nguyen et al. (https://arxiv.org/abs/2010.15327).
         :param dataloader: dataloader that will be used during the computation.
+        :param epochs: number of iterations over the dataloader (default=10).
         :param f_extract: the function to apply on the dataloader, this function should take any number and type of
             inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
             type of the batch (default=None).
         :param f_args: the arguments passed to the f_extract function (default=None).
         :return: the CKA value.
         """
+        if dataloader.drop_last:
+            raise ValueError(
+                "The argument 'drop_last' must be set to False otherwise you will get very different values by varying"
+                "the batch size."
+            )
+
+        if not isinstance(dataloader.sampler, RandomSampler):
+            warn("We suggest setting 'shuffle=True' in your dataloader in order to have a less biased computation.")
+
         self.first_extractor.eval()
         self.second_extractor.eval()
 
         with torch.no_grad():
             n = len(self.first_model_infos["layers"])
             m = len(self.second_model_infos["layers"])
-            cka = torch.zeros(n, m, device=self.device)
 
             # Iterate through the dataset
             num_batches = len(dataloader)
-            for batch in tqdm(dataloader, desc="| Computing CKA |", total=num_batches):
-                if f_extract is not None:
-                    # Apply the provided function and put everything on the device
-                    f_extract = {} if f_extract is None else f_extract
-                    batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
-                    batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
-                elif isinstance(batch, list | tuple):
-                    args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" argument
-                    batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
-                else:
-                    raise ValueError(
-                        f"Type {type(batch)} is not supported for the CKA computation. We suggest building a custom"
-                        f"'Dataset' class such that the '__get_item__' method returns a dict[str, torch.Tensor]."
-                    )
+            cka_matrices = []
+            for epoch in tqdm(range(epochs), desc="| Computing CKA |", total=epochs):
+                cka_epoch = torch.zeros(n, m, device=self.device)
+                for batch in tqdm(dataloader, desc=f"| Computing CKA epoch {epoch} |", total=num_batches, leave=False):
+                    if f_extract is not None:
+                        # Apply the provided function and put everything on the device
+                        f_extract = {} if f_extract is None else f_extract
+                        batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
+                        batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
+                    elif isinstance(batch, list | tuple):
+                        args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" arg
+                        batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
+                    else:
+                        raise ValueError(
+                            f"Type {type(batch)} is not supported for the CKA computation. We suggest building a custom"
+                            f"'Dataset' class such that the '__get_item__' method returns a dict[str, torch.Tensor]."
+                        )
 
-                # Do a forward pass for both models
-                first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
-                second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
+                    # Do a forward pass for both models
+                    first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
+                    second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
 
-                # Compute the CKA values for each output pair
-                for i, (_, x) in enumerate(first_outputs.items()):
-                    for j, (_, y) in enumerate(second_outputs.items()):
-                        cka[i, j] = cka_batch(x, y)
+                    # Compute the CKA values for each output pair
+                    for i, (_, x) in enumerate(first_outputs.items()):
+                        for j, (_, y) in enumerate(second_outputs.items()):
+                            cka_epoch[i, j] = cka_batch(x, y)
+
+                cka_matrices.append(cka_epoch)
+
+        cka = torch.stack(cka_matrices)
+        cka = cka.sum(0) / epochs
 
         # One last check
         if torch.isnan(cka).any():
@@ -215,8 +234,8 @@ class CKA:
         # Build the heatmap
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
         ax.invert_yaxis()
-        ax.set_xlabel(f"{self.second_model_infos["name"]} layers", fontsize=12)
-        ax.set_ylabel(f"{self.first_model_infos["name"]} layers", fontsize=12)
+        ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
+        ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
 
         # Deal with tick labels
         if show_ticks_labels:
@@ -244,7 +263,7 @@ class CKA:
         if title is not None:
             ax.set_title(title, fontsize=14)
         else:
-            title = f"{self.first_model_infos["name"]} vs {self.second_model_infos["name"]}"
+            title = f"{self.first_model_infos['name']} vs {self.second_model_infos['name']}"
             ax.set_title(title, fontsize=14)
 
         # Set the layout to tight if the corresponding parameter is True

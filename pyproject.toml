@@ -13,8 +13,21 @@ src = ["cka"]
 target-version = "py310"
 
 [tool.ruff.lint]
-ignore = ["E111", "E114", "E117", "E501"]
-select = ["E", "F", "I", "N", "RUF", "UP"]
+ignore = [
+    "E111", # Indentation is not a multiple of {indent_width}
+    "E114", # Indentation is not a multiple of {indent_width} (comment)
+    "E117", # Over-indented (comment)
+    "E501", # Line too long
+]
+select = [
+    "E", # PEP8 errors
+    "F", # PEP8 formatting
+    "I", # Import sorting
+    "N", # PEP8 naming
+    "RUF", # Ruff specific rules
+    "UP", # Pyupgrade upgrades
+]
 
 [tool.ruff.lint.isort]
 force-single-line = false
+lines-after-imports = 2
