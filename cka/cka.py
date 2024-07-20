@@ -100,9 +100,12 @@ class CKA:
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
-        second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
-        if first_name == second_name and first_model is not second_model:
-            warn(f"Both models are called {first_name}, beware that it may cause confusion when analyzing the results.")
+        if first_model is second_model:
+            second_name = first_name
+        else:
+            second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
+            if first_name == second_name:
+                warn(f"Both models are called {first_name}. This may cause confusion when analyzing the results.")
 
         # Set up the models infos
         self.first_model_infos = {"name": first_name, "layers": layers}
