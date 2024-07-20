@@ -1,6 +1,5 @@
 import inspect
 from collections.abc import Callable
-from typing import Literal
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -27,7 +26,6 @@ class CKA:
         first_name: str | None = None,
         second_name: str | None = None,
         device: str | torch.device = "cpu",
-        kernel: Literal["linear", "rbf"] = "linear",
     ) -> None:
         """
         Centered Kernel Alignment (CKA) implementation. Given a set of examples, CKA compares the representations of
@@ -44,18 +42,11 @@ class CKA:
         :param first_name: name of the first model (default=None).
         :param second_name: name of the second model (default=None).
         :param device: the device used during the computation (default="cpu").
-        :param kernel: the type of kernel, can be either "linear" or "rbf" (default="linear").
         """
         super().__init__()
 
         # Set up the device
         self.device = torch.device(device)
-
-        # Set up the kernel
-        if kernel not in ["rbf", "linear"]:
-            raise ValueError("The kernel must be either 'linear' or 'rbf'.")
-
-        self.kernel = kernel
 
         # Check if no layers were passed
         if layers is None or len(layers) == 0:
