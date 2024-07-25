@@ -82,10 +82,14 @@ class CKA:
                     f"Consider passing only those layers whose features you are really interested about."
                 )
 
+        # Dicts where the output of each layer (i.e.: the features) will be saved while using hooks
         self.first_features = {}
         self.second_features = {}
+
+        # The CKA computation can be performed through hooks or feature extractors, the results will be the same
         self.use_hooks = use_hooks
         if use_hooks or isinstance(first_model, PreTrainedModel) or isinstance(second_model, PreTrainedModel):
+            # Insert a hook for each layer
             layers, second_layers = self._insert_hooks(first_model, second_model, layers, second_layers)
             self.first_model = first_model.to(device)
             self.second_model = second_model.to(device)
@@ -121,23 +125,41 @@ class CKA:
         self.second_model_infos = {"name": second_name, "layers": second_layers}
 
     def _hook(self, model: str, module_name: str, module: nn.Module, inp: torch.Tensor, out: torch.Tensor) -> None:
+        del module, inp  # delete unused arguments so that we can pass the linter checks
         if model == "first":
             self.first_features[module_name] = out.detach()
         else:
             self.second_features[module_name] = out.detach()
 
-    def _insert_hooks(self, first_model, second_model, layers, second_layers) -> tuple[list[str], list[str]]:
+    def _insert_hooks(
+        self,
+        first_model: nn.Module,
+        second_model: nn.Module,
+        layers: list[str],
+        second_layers: list[str],
+    ) -> tuple[list[str], list[str]]:
+        # Only those layers that were found will be placed inside the following lists
         filtered_layers = []
         filtered_second_layers = []
-        for module_name, module in list(first_model.named_modules())[1:]:
+
+        # Add hooks for the first model's layers
+        for module_name, module in list(first_model.named_modules()):
             if module_name in layers:
                 module.register_forward_hook(partial(self._hook, "first", module_name))
                 filtered_layers.append(module_name)
 
-        for module_name, module in list(second_model.named_modules())[1:]:
+        # Add hooks for the second model's layers
+        for module_name, module in list(second_model.named_modules()):
             if module_name in second_layers:
                 module.register_forward_hook(partial(self._hook, "second", module_name))
                 filtered_second_layers.append(module_name)
+
+        # One last check
+        if len(filtered_layers) == 0 or len(filtered_second_layers) == 0:
+            raise ValueError(
+                "No layers were found for one of the two models, please use 'model.named_modules()' in order to check"
+                "which layers can be passed to the method."
+            )
 
         return filtered_layers, filtered_second_layers
 
@@ -193,11 +215,8 @@ class CKA:
                         batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
-                        if self.use_hooks:
-                            args_list = inspect.getfullargspec(self.first_model.forward).args[1:]  # skip "self" arg
-                        else:
-                            args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" arg
-
+                        arg_method = self.first_model.forward if self.use_hooks else self.first_extractor.forward
+                        args_list = inspect.getfullargspec(arg_method).args[1:]  # skip "self" arg
                         batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
                     elif not isinstance(batch, dict):
                         raise ValueError(

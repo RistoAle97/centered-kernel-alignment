@@ -20,6 +20,7 @@ ignore = [
     "E501", # Line too long
 ]
 select = [
+    "ARG", # Flake8 unused arguments
     "E", # PEP8 errors
     "F", # PEP8 formatting
     "I", # Import sorting
