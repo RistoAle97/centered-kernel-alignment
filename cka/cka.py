@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Callable
+from functools import partial
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,7 @@ from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
+from transformers import PreTrainedModel
 
 from .core import cka_batch
 
@@ -25,6 +27,7 @@ class CKA:
         second_leaf_modules: list[type[nn.Module]] | None = None,
         first_name: str | None = None,
         second_name: str | None = None,
+        use_hooks: bool = False,
         device: str | torch.device = "cpu",
     ) -> None:
         """
@@ -41,10 +44,10 @@ class CKA:
             (default=None).
         :param first_name: name of the first model (default=None).
         :param second_name: name of the second model (default=None).
+        :param use_hooks: whether to use hooks instead of the feature extractors. This parameter will be forcibly set as
+            True in case you are working with a HuggingFace model(default=False).
         :param device: the device used during the computation (default="cpu").
         """
-        super().__init__()
-
         # Set up the device
         self.device = torch.device(device)
 
@@ -65,7 +68,7 @@ class CKA:
                 f"layers whose features you are really interested about."
             )
 
-        # Work with the second model's layers if passed
+        # Copy the first model's layers if they are not passed
         if second_layers is None or len(second_layers) == 0:
             second_layers = layers.copy()
         else:
@@ -79,24 +82,30 @@ class CKA:
                     f"Consider passing only those layers whose features you are really interested about."
                 )
 
-        # Deal with the non-traceable layers
-        first_tracer_kwargs = {"leaf_modules": first_leaf_modules} if first_leaf_modules is not None else None
-        second_tracer_kwargs = {"leaf_modules": second_leaf_modules} if second_leaf_modules is not None else None
+        self.first_features = {}
+        self.second_features = {}
+        self.use_hooks = use_hooks
+        if use_hooks or isinstance(first_model, PreTrainedModel) or isinstance(second_model, PreTrainedModel):
+            layers, second_layers = self._insert_hooks(first_model, second_model, layers, second_layers)
+            self.first_model = first_model.to(device)
+            self.second_model = second_model.to(device)
+        else:
+            # Deal with the non-traceable layers
+            first_tracer_kwargs = {"leaf_modules": first_leaf_modules} if first_leaf_modules is not None else None
+            second_tracer_kwargs = {"leaf_modules": second_leaf_modules} if second_leaf_modules is not None else None
 
-        # Build the extractors, they work like a normal torch.nn.Module, but their output is a dict containing the
-        # features of each layer under their scope.
-        self.first_extractor = create_feature_extractor(
-            model=first_model,
-            return_nodes=layers,
-            tracer_kwargs=first_tracer_kwargs,
-            # concrete_args={"input_embeds": None},
-        ).to(self.device)
-        self.second_extractor = create_feature_extractor(
-            model=second_model,
-            return_nodes=second_layers,
-            tracer_kwargs=second_tracer_kwargs,
-            # concrete_args={"input_embeds": None},
-        ).to(self.device)
+            # Build the extractors, they work like a normal torch.nn.Module, but their output is a dict containing the
+            # features of each layer under their scope.
+            self.first_extractor = create_feature_extractor(
+                model=first_model,
+                return_nodes=layers,
+                tracer_kwargs=first_tracer_kwargs,
+            ).to(self.device)
+            self.second_extractor = create_feature_extractor(
+                model=second_model,
+                return_nodes=second_layers,
+                tracer_kwargs=second_tracer_kwargs,
+            ).to(self.device)
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
@@ -110,6 +119,27 @@ class CKA:
         # Set up the models infos
         self.first_model_infos = {"name": first_name, "layers": layers}
         self.second_model_infos = {"name": second_name, "layers": second_layers}
+
+    def _hook(self, model: str, module_name: str, module: nn.Module, inp: torch.Tensor, out: torch.Tensor) -> None:
+        if model == "first":
+            self.first_features[module_name] = out.detach()
+        else:
+            self.second_features[module_name] = out.detach()
+
+    def _insert_hooks(self, first_model, second_model, layers, second_layers) -> tuple[list[str], list[str]]:
+        filtered_layers = []
+        filtered_second_layers = []
+        for module_name, module in list(first_model.named_modules())[1:]:
+            if module_name in layers:
+                module.register_forward_hook(partial(self._hook, "first", module_name))
+                filtered_layers.append(module_name)
+
+        for module_name, module in list(second_model.named_modules())[1:]:
+            if module_name in second_layers:
+                module.register_forward_hook(partial(self._hook, "second", module_name))
+                filtered_second_layers.append(module_name)
+
+        return filtered_layers, filtered_second_layers
 
     def __call__(
         self,
@@ -138,8 +168,12 @@ class CKA:
         if not isinstance(dataloader.sampler, RandomSampler):
             warn("We suggest setting 'shuffle=True' in your dataloader in order to have a less biased computation.")
 
-        self.first_extractor.eval()
-        self.second_extractor.eval()
+        if self.use_hooks:
+            self.first_model.eval()
+            self.second_model.eval()
+        else:
+            self.first_extractor.eval()
+            self.second_extractor.eval()
 
         with torch.no_grad():
             n = len(self.first_model_infos["layers"])
@@ -151,23 +185,35 @@ class CKA:
             for epoch in tqdm(range(epochs), desc="| Computing CKA |", total=epochs):
                 cka_epoch = torch.zeros(n, m, device=self.device)
                 for batch in tqdm(dataloader, desc=f"| Computing CKA epoch {epoch} |", total=num_batches, leave=False):
+                    self.first_features = {}
+                    self.second_features = {}
                     if f_extract is not None:
                         # Apply the provided function and put everything on the device
                         f_extract = {} if f_extract is None else f_extract
                         batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
-                        args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" arg
+                        if self.use_hooks:
+                            args_list = inspect.getfullargspec(self.first_model.forward).args[1:]  # skip "self" arg
+                        else:
+                            args_list = inspect.getfullargspec(self.first_extractor.forward).args[1:]  # skip "self" arg
+
                         batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
-                    else:
+                    elif not isinstance(batch, dict):
                         raise ValueError(
                             f"Type {type(batch)} is not supported for the CKA computation. We suggest building a custom"
-                            f"'Dataset' class such that the '__get_item__' method returns a dict[str, torch.Tensor]."
+                            f"'Dataset' class such that the '__get_item__' method returns a dict[str, Any]."
                         )
 
                     # Do a forward pass for both models
-                    first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
-                    second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
+                    if self.use_hooks:
+                        _ = self.first_model(**batch)
+                        _ = self.second_model(**batch)
+                        first_outputs = self.first_features
+                        second_outputs = self.second_features
+                    else:
+                        first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
+                        second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
 
                     # Compute the CKA values for each output pair
                     for i, (_, x) in enumerate(first_outputs.items()):

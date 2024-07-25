@@ -1,8 +1,9 @@
 black>=24.1.1
 matplotlib>=3.8.0
 numpy>=1.24.3
-ruff>=0.5.1
+ruff>=0.5.4
 seaborn>=0.12.2
 tqdm>=4.66.1
 torch>=2.3.1
 torchvision>=0.18.1
+transformers>=4.43.0

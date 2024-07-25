@@ -8,9 +8,7 @@ from cka import CKA
 
 class FF(nn.Module):
     def __init__(self) -> None:
-        """
-        Simple feed-forward network like the ones used in the transformer architecture.
-        """
+        """Simple feed-forward network like the ones used in the transformer architecture."""
         super().__init__()
         self.linear1 = nn.Linear(512, 2048, dtype=torch.float64)
         self.dropout = nn.Dropout(0.0)
@@ -26,9 +24,7 @@ class FF(nn.Module):
 
 class ManyFF(nn.Module):
     def __init__(self) -> None:
-        """
-        Many feed-forward networks one after the other.
-        """
+        """Many feed-forward networks one after the other."""
         super().__init__()
         self.first_ff = FF()
         self.second_ff = FF()
@@ -69,6 +65,7 @@ if __name__ == "__main__":
     shared_parameters = {
         "layers": layers_to_observe,
         "first_name": "ManyFF_0",
+        "use_hooks": False,
         "device": "cuda:0",
     }
 
