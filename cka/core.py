@@ -14,8 +14,7 @@ def cka_base(
     threshold: float = 1.0,
     method: Literal["fro_norm", "hsic"] = "fro_norm",
 ) -> torch.Tensor:
-    """
-    Compute the Centered Kernel Alignment between two given matrices. Adapted from the one made by Kornblith et al.
+    """Compute the Centered Kernel Alignment between two given matrices. Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
     :param x: tensor of shape (n, j).
     :param y: tensor of shape (n, k).
@@ -58,8 +57,7 @@ def cka_base(
 
 
 def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the minibatch version of CKA from Nguyen et al. (https://arxiv.org/abs/2010.15327). This computation is
+    """Compute the minibatch version of CKA from Nguyen et al. (https://arxiv.org/abs/2010.15327). This computation is
     performed with linear kernel and by calculating HSIC_1.
     :param x: tensor of shape (bsz, n, j).
     :param y: tensor of shape (bsz, n, k).

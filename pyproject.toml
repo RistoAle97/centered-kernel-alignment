@@ -6,10 +6,9 @@ diff = true
 color = true
 
 [tool.ruff]
-include = ["cka/**/*.py", "examples/**/*py", "pyproject.toml", "*.ipynb"]
+extend-include = ["*.ipynb"]
 line-length = 120
 output-format = "grouped"
-src = ["cka"]
 target-version = "py310"
 
 [tool.ruff.lint]
@@ -32,3 +31,9 @@ select = [
 [tool.ruff.lint.isort]
 force-single-line = false
 lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true

@@ -2,8 +2,7 @@ import torch
 
 
 def hsic0(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the Hilbert-Schmidt Independence Criterion on two given Gram matrices.
+    """Compute the Hilbert-Schmidt Independence Criterion on two given Gram matrices.
     :param gram_x: Gram matrix of shape (n, n), this is equivalent to K from the original paper.
     :param gram_y: Gram matrix of shape (n, n), this is equivalent to L from the original paper.
     :return: the Hilbert-Schmidt Independence Criterion values.
@@ -28,8 +27,7 @@ def hsic0(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
 
 
 def hsic1(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the batched version of the Hilbert-Schmidt Independence Criterion on Gram matrices. This version is based on
+    """Compute the batched version of the Hilbert-Schmidt Independence Criterion on Gram matrices. This version is based on
     https://github.com/numpee/CKA.pytorch/blob/07874ec7e219ad29a29ee8d5ebdada0e1156cf9f/cka.py#L107.
     :param gram_x: a tensor of shape (bsz, n, n).
     :param gram_y: a tensor of shape (bsz, n, n).

@@ -1,7 +1,6 @@
-black>=24.1.1
 matplotlib>=3.8.0
 numpy>=1.24.3
-ruff>=0.5.4
+pre-commit>=3.7.1
 seaborn>=0.12.2
 tqdm>=4.66.1
 torch>=2.3.1

@@ -1,6 +1,7 @@
 import inspect
 from collections.abc import Callable
 from functools import partial
+from typing import Any
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -30,8 +31,7 @@ class CKA:
         use_hooks: bool = False,
         device: str | torch.device = "cpu",
     ) -> None:
-        """
-        Centered Kernel Alignment (CKA) implementation. Given a set of examples, CKA compares the representations of
+        """Centered Kernel Alignment (CKA) implementation. Given a set of examples, CKA compares the representations of
         examples passed through the layers that we want to compare.
         :param first_model: the first model whose layer features we want to compare.
         :param second_model: the second model whose layer features we want to compare.
@@ -83,8 +83,8 @@ class CKA:
                 )
 
         # Dicts where the output of each layer (i.e.: the features) will be saved while using hooks
-        self.first_features = {}
-        self.second_features = {}
+        self.first_features: dict[str, torch.Tensor] = {}
+        self.second_features: dict[str, torch.Tensor] = {}
 
         # The CKA computation can be performed through hooks or feature extractors, the results will be the same
         self.use_hooks = use_hooks
@@ -168,10 +168,9 @@ class CKA:
         dataloader: DataLoader,
         epochs: int = 10,
         f_extract: Callable[..., dict[str, torch.Tensor]] | None = None,
-        f_args: dict[str, ...] | None = None,
+        f_args: dict[str, Any] | None = None,
     ) -> torch.Tensor:
-        """
-        Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
+        """Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
         Nguyen et al. (https://arxiv.org/abs/2010.15327).
         :param dataloader: dataloader that will be used during the computation.
         :param epochs: number of iterations over the dataloader (default=10).
@@ -212,7 +211,7 @@ class CKA:
                     if f_extract is not None:
                         # Apply the provided function and put everything on the device
                         f_extract = {} if f_extract is None else f_extract
-                        batch: dict[str, torch.Tensor] = f_extract(batch, **f_args)
+                        batch = f_extract(batch, **f_args)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
                         arg_method = self.first_model.forward if self.use_hooks else self.first_extractor.forward
@@ -231,8 +230,8 @@ class CKA:
                         first_outputs = self.first_features
                         second_outputs = self.second_features
                     else:
-                        first_outputs: dict[str, torch.Tensor] = self.first_extractor(**batch)
-                        second_outputs: dict[str, torch.Tensor] = self.second_extractor(**batch)
+                        first_outputs = self.first_extractor(**batch)
+                        second_outputs = self.second_extractor(**batch)
 
                     # Compute the CKA values for each output pair
                     for i, (_, x) in enumerate(first_outputs.items()):
@@ -246,7 +245,7 @@ class CKA:
 
         # One last check
         if torch.isnan(cka).any():
-            raise "CKA computation resulted in NANs"
+            raise ValueError("CKA computation resulted in NANs.")
 
         return cka
 
@@ -263,8 +262,7 @@ class CKA:
         show_half_heatmap: bool = False,
         **kwargs,
     ) -> None:
-        """
-        Plot the CKA matrix obtained calling this class' forward() method.
+        """Plot the CKA matrix obtained calling this class' forward() method.
         :param cka_matrix: the CKA matrix.
         :param save_path: the path where to save the plot, if None then the plot will not be saved (default=None).
         :param title: the plot title, if None then no title will be used (default=None).

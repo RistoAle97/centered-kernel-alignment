@@ -2,8 +2,7 @@ import torch
 
 
 def linear_kernel(x: torch.Tensor) -> torch.Tensor:
-    """
-    Computes the Gram (kernel) matrix for a linear kernel. Adapted from the one made by Kornblith et al.
+    """Computes the Gram (kernel) matrix for a linear kernel. Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
     :param x: tensor of shape (n, m).
     :return: tensor of shape (n, n).
@@ -12,8 +11,7 @@ def linear_kernel(x: torch.Tensor) -> torch.Tensor:
 
 
 def rbf_kernel(x: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
-    """
-    Computes the Gram (kernel) matrix for an RBF kernel. Adapted from the one made by Kornblith et al.
+    """Computes the Gram (kernel) matrix for an RBF kernel. Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
     :param x: tensor of shape (n, m).
     :param threshold: fraction of median Euclidean distance to use as RBF kernel bandwidth (default=1.0).
@@ -26,9 +24,8 @@ def rbf_kernel(x: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
     return torch.exp(-sq_distances / (2 * threshold**2 * sq_median_distance))
 
 
-def center_gram_matrix(gram_matrix: torch.Tensor, unbiased=False) -> torch.Tensor:
-    """
-    Centers a given Gram matrix. Adapted from the one made by Kornblith et al.
+def center_gram_matrix(gram_matrix: torch.Tensor, unbiased: bool = False) -> torch.Tensor:
+    """Centers a given Gram matrix. Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
     :param gram_matrix: tensor of shape (n, n).
     :param unbiased: whether to use the unbiased version of the centering (default=False).
