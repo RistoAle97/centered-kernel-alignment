@@ -1,3 +1,5 @@
+"""Centered Kernel Alignment in PyTorch."""
+
 from .cka import CKA
 from .core import cka_base, cka_batch
 from .hsic import hsic0, hsic1

@@ -1,11 +1,20 @@
+"""Module for computing HSIC (Hilbert-Schmidt Independence Criterion), both its standard and mini-batch versions."""
+
 import torch
 
 
 def hsic0(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
     """Compute the Hilbert-Schmidt Independence Criterion on two given Gram matrices.
-    :param gram_x: Gram matrix of shape (n, n), this is equivalent to K from the original paper.
-    :param gram_y: Gram matrix of shape (n, n), this is equivalent to L from the original paper.
-    :return: the Hilbert-Schmidt Independence Criterion values.
+
+    Args:
+        gram_x: Gram matrix of shape (n, n), this is equivalent to K from the original paper.
+        gram_y: Gram matrix of shape (n, n), this is equivalent to L from the original paper.
+
+    Returns:
+        a tensor with the Hilbert-Schmidt Independence Criterion values.
+
+    Raises:
+        ValueError: if ``gram_x`` and ``gram_y`` are not symmetric.
     """
     if not torch.allclose(gram_x, gram_x.T) and not torch.allclose(gram_y, gram_y.T):
         raise ValueError("The given matrices must be symmetric.")
@@ -27,11 +36,21 @@ def hsic0(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
 
 
 def hsic1(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
-    """Compute the batched version of the Hilbert-Schmidt Independence Criterion on Gram matrices. This version is based on
+    """Compute the batched version of the Hilbert-Schmidt Independence Criterion on Gram matrices.
+
+    This version is based on
     https://github.com/numpee/CKA.pytorch/blob/07874ec7e219ad29a29ee8d5ebdada0e1156cf9f/cka.py#L107.
-    :param gram_x: a tensor of shape (bsz, n, n).
-    :param gram_y: a tensor of shape (bsz, n, n).
-    :return: the unbiased Hilbert-Schmidt Independence Criterion values.
+
+    Args:
+        gram_x: batch of Gram matrices of shape (bsz, n, n).
+        gram_y: batch of Gram matrices of shape (bsz, n, n).
+
+    Returns:
+        a tensor with the unbiased Hilbert-Schmidt Independence Criterion values.
+
+    Raises:
+        ValueError: if ``gram_x`` and ``gram_y`` do not have the same shape or if they do not have exactly three
+        dimensions.
     """
     if len(gram_x.size()) != 3 or gram_x.size() != gram_y.size():
         raise ValueError("Invalid size for one of the two input tensors.")

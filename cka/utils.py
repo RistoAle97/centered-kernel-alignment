@@ -1,21 +1,35 @@
+"""Utilities for computing and centering Gram matrices."""
+
 import torch
 
 
 def linear_kernel(x: torch.Tensor) -> torch.Tensor:
-    """Computes the Gram (kernel) matrix for a linear kernel. Adapted from the one made by Kornblith et al.
+    """Computes the Gram (kernel) matrix for a linear kernel.
+
+    Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
-    :param x: tensor of shape (n, m).
-    :return: tensor of shape (n, n).
+
+    Args:
+        x: tensor of shape (n, m).
+
+    Returns:
+        a Gram matrix which is a tensor of shape (n, n).
     """
     return torch.mm(x, x.T)
 
 
 def rbf_kernel(x: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
-    """Computes the Gram (kernel) matrix for an RBF kernel. Adapted from the one made by Kornblith et al.
+    """Computes the Gram (kernel) matrix for an RBF kernel.
+
+    Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
-    :param x: tensor of shape (n, m).
-    :param threshold: fraction of median Euclidean distance to use as RBF kernel bandwidth (default=1.0).
-    :return: tensor of shape (n, n).
+
+    Args:
+        x: tensor of shape (n, m).
+        threshold: fraction of median Euclidean distance to use as RBF kernel bandwidth (default=1.0).
+
+    Returns:
+        a Gram matrix which is a tensor of shape (n, n).
     """
     dot_products = torch.mm(x, x.T)
     sq_norms = torch.diag(dot_products)
@@ -25,11 +39,17 @@ def rbf_kernel(x: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
 
 
 def center_gram_matrix(gram_matrix: torch.Tensor, unbiased: bool = False) -> torch.Tensor:
-    """Centers a given Gram matrix. Adapted from the one made by Kornblith et al.
+    """Centers a given Gram matrix.
+
+    Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
-    :param gram_matrix: tensor of shape (n, n).
-    :param unbiased: whether to use the unbiased version of the centering (default=False).
-    :return: the centered version of the given Gram matrix.
+
+    Args:
+        gram_matrix: tensor of shape (n, n).
+        unbiased: whether to use the unbiased version of the centering (default=False).
+
+    Returns:
+        the centered version of the given Gram matrix.
     """
     if not torch.allclose(gram_matrix, gram_matrix.T):
         raise ValueError("The given matrix must be symmetric.")
