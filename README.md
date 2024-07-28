@@ -41,7 +41,13 @@ with $\boldsymbol{K_i}=\boldsymbol{X_iX_i^T}$ and $\boldsymbol{L_i}=\boldsymbol{
 ---
 
 ## :package: Installation
-This project requires python >= 3.10. All the necessary packages can be installed with
+This project requires python >= 3.10. As first step, clone the repository
+```bash
+git clone https://github.com/RistoAle97/centered-kernel-alignment
+```
+Then, you can install the necessary packages with
+> [!WARNING]
+> This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch not compiled with CUDA if you are on Windows. If you want to use your GPU during the computation, you should follow the [official site](https://pytorch.org/)
 ```bash
 pip install -r requirements.txt
 ```

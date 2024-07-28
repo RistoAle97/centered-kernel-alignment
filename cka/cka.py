@@ -1,3 +1,5 @@
+"""Module for computing CKA in order to compare two PyTorch models through their layers' activations."""
+
 import inspect
 from collections.abc import Callable
 from functools import partial
@@ -18,6 +20,13 @@ from .core import cka_batch
 
 
 class CKA:
+    """Centered Kernel Alignment (CKA) implementation.
+
+    CKA is a similarity index between representations of features in neural networks, based on the
+    Hilbert-Schmidt Independence Criterion (HSIC). Given a set of examples, CKA compares the representations of examples
+    passed through the layers that we want to compare.
+    """
+
     def __init__(
         self,
         first_model: nn.Module,
@@ -31,22 +40,26 @@ class CKA:
         use_hooks: bool = False,
         device: str | torch.device = "cpu",
     ) -> None:
-        """Centered Kernel Alignment (CKA) implementation. Given a set of examples, CKA compares the representations of
-        examples passed through the layers that we want to compare.
-        :param first_model: the first model whose layer features we want to compare.
-        :param second_model: the second model whose layer features we want to compare.
-        :param layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will
-            count for the second model too).
-        :param second_layers: list of layers from the second model under inspection (default=None).
-        :param first_leaf_modules: list of problematic layers that will not be traced by the first extractor
-            (default=None).
-        :param second_leaf_modules: list of problematic layers that will not be traced by the second extractor
-            (default=None).
-        :param first_name: name of the first model (default=None).
-        :param second_name: name of the second model (default=None).
-        :param use_hooks: whether to use hooks instead of the feature extractors. This parameter will be forcibly set as
-            True in case you are working with a HuggingFace model(default=False).
-        :param device: the device used during the computation (default="cpu").
+        """Initializes a CKA object.
+
+        Args:
+            first_model: the first model whose layer features we want to compare.
+            second_model: the second model whose layer features we want to compare.
+            layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will count
+                for the second model too).
+            second_layers: list of layers from the second model under inspection (default=None).
+            first_leaf_modules: list of problematic layers that will not be traced by the first extractor, this
+                parameter will not have any effect if ``use_hooks`` is True (default=None).
+            second_leaf_modules: list of problematic layers that will not be traced by the second extractor, this
+                parameter will not have any effect if ``use_hooks`` is True (default=None).
+            first_name: name of the first model (default=None).
+            second_name: name of the second model (default=None).
+            use_hooks: whether to use hooks instead of the feature extractors. This parameter will be forcibly set as
+                True in case you are working with a HuggingFace model(default=False).
+            device: the device used during the computation (default="cpu").
+
+        Raises:
+            ValueError: if ``layers`` is None or empty.
         """
         # Set up the device
         self.device = torch.device(device)
@@ -170,15 +183,24 @@ class CKA:
         f_extract: Callable[..., dict[str, torch.Tensor]] | None = None,
         f_args: dict[str, Any] | None = None,
     ) -> torch.Tensor:
-        """Process inputs and computes the CKA matrix. Note that this computation uses the minibatch version of CKA by
-        Nguyen et al. (https://arxiv.org/abs/2010.15327).
-        :param dataloader: dataloader that will be used during the computation.
-        :param epochs: number of iterations over the dataloader (default=10).
-        :param f_extract: the function to apply on the dataloader, this function should take any number and type of
-            inputs and return a dict. If no function is passed, then some checks will be applied for finding the actual
-            type of the batch (default=None).
-        :param f_args: the arguments passed to the f_extract function (default=None).
-        :return: the CKA value.
+        """Process inputs and computes the CKA matrix.
+
+        This computation employs the minibatch version of CKA by Nguyen et al. (https://arxiv.org/abs/2010.15327).
+
+        Args:
+            dataloader: dataloader that will be used during the computation.
+            epochs: number of iterations over the dataloader (default=10).
+            f_extract: the function to apply on the dataloader, this function should take any number and type of inputs
+                and return a dict. If no function is passed, then some checks will be applied for finding the actual
+                type of the batch (default=None).
+            f_args: the arguments passed to the f_extract function (default=None).
+
+        Returns:
+            a tensor with the CKA matrix.
+
+        Raises:
+            ValueError: if the parameter 'drop_last' of the dataloader is set to True or if the batch type is not
+                supported.
         """
         if dataloader.drop_last:
             raise ValueError(
@@ -254,43 +276,54 @@ class CKA:
         cka_matrix: torch.Tensor,
         save_path: str | None = None,
         title: str | None = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
+        cmap: str = "magma",
         show_ticks_labels: bool = False,
         short_tick_labels_splits: int | None = None,
         use_tight_layout: bool = True,
         show_annotations: bool = True,
         show_img: bool = True,
         show_half_heatmap: bool = False,
-        **kwargs,
+        invert_y_axis: bool = True,
     ) -> None:
-        """Plot the CKA matrix obtained calling this class' forward() method.
-        :param cka_matrix: the CKA matrix.
-        :param save_path: the path where to save the plot, if None then the plot will not be saved (default=None).
-        :param title: the plot title, if None then no title will be used (default=None).
-        :param show_ticks_labels: whether to show the tick labels (default=False).
-        :param short_tick_labels_splits: only works when show_tick_labels is True. If it is not None, the tick labels
-            will be shortened to the defined sublayer starting from the deepest level. E.g.: if the layer name is
-            'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on the heatmap
-            (default=None).
-        :param use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
-        :param show_annotations: whether to show the annotations on the heatmap (default=True).
-        :param show_img: whether to show the plot (default=True).
-        :param show_half_heatmap: whether to mask the upper left part of the heatmap since those valued are duplicates
-            (default=False).
+        """Plot the CKA matrix obtained by calling this class' __call__() method.
+
+        Args:
+            cka_matrix: the CKA matrix.
+            save_path: the path where to save the plot, if None then the plot will not be saved (default=None).
+            title: the plot title, if None then a simple text with the name of both models will be used (default=None).
+            vmin: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+            vmax: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
+            cmap: the name of the colormap to use (default: 'magma').
+            show_ticks_labels: whether to show the tick labels (default=False).
+            short_tick_labels_splits: only works when show_tick_labels is True. If it is not None, the tick labels will
+                be shortened to the defined sublayer starting from the deepest level. E.g.: if the layer name is
+                'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on the heatmap
+                (default=None).
+            use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
+            show_annotations: whether to show the annotations on the heatmap (default=True).
+            show_img: whether to show the plot (default=True).
+            show_half_heatmap: whether to mask the upper left part of the heatmap since those valued are duplicates
+                (default=False).
+            invert_y_axis: whether to invert the y-axis of the plot (default=True).
+
+        Raises:
+            ValueError: if ``vmax`` or ``vmin`` are not defined together or both equal to None.
         """
         # Deal with some arguments
-        vmin: float | None = kwargs.get("vmin", None)
-        vmax: float | None = kwargs.get("vmax", None)
         if (vmin is not None) ^ (vmax is not None):
             raise ValueError("'vmin' and 'vmax' must be defined together or both equal to None.")
 
-        cmap = kwargs.get("cmap", "magma")
         vmin = min(vmin, torch.min(cka_matrix).item()) if vmin is not None else vmin
         vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
         mask = np.tril(np.ones_like(cka_matrix.cpu(), dtype=bool), k=-1) if show_half_heatmap else None
 
         # Build the heatmap
         ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
-        ax.invert_yaxis()
+        if invert_y_axis:
+            ax.invert_yaxis()
+
         ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
         ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
 

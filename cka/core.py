@@ -1,3 +1,5 @@
+"""Module that implements both base and mini-batch CKA."""
+
 from typing import Literal
 
 import torch
@@ -14,17 +16,26 @@ def cka_base(
     threshold: float = 1.0,
     method: Literal["fro_norm", "hsic"] = "fro_norm",
 ) -> torch.Tensor:
-    """Compute the Centered Kernel Alignment between two given matrices. Adapted from the one made by Kornblith et al.
+    """Computes the Centered Kernel Alignment (CKA) between two given matrices.
+
+    Adapted from the one made by Kornblith et al.
     https://github.com/google-research/google-research/tree/master/representation_similarity.
-    :param x: tensor of shape (n, j).
-    :param y: tensor of shape (n, k).
-    :param kernel: the kernel used to compute the Gram matrices, must be "linear" or "rbf" (default="linear).
-    :param unbiased: whether to use the unbiased version of CKA (default=False).
-    :param threshold: the threshold used by the RBF kernel (default=1.0).
-    :param method: the method used to compute the CKA value, must be "fro_norm" (Frobenius norm) or "hsic"
-        (Hilbert-Schmidt Independence Criterion). Note that the choice does not influence the output
-        (default="fro_norm").
-    :return: a float tensor in [0, 1] that is the CKA value between the two given matrices.
+
+    Args:
+        x: tensor of shape (n, j).
+        y: tensor of shape (n, k).
+        kernel: the kernel used to compute the Gram matrices, must be "linear" or "rbf" (default="linear).
+        unbiased: whether to use the unbiased version of CKA (default=False).
+        threshold: the threshold used by the RBF kernel (default=1.0).
+        method: the method used to compute the CKA value, must be "fro_norm" (Frobenius norm) or "hsic"
+            (Hilbert-Schmidt Independence Criterion). Note that the choice does not influence the output
+            (default="fro_norm").
+
+    Returns:
+        a float tensor in [0, 1] that is the CKA value between the two given matrices.
+
+    Raises:
+        ValueError: if ``kernel`` is not "linear" or "rbf" or if ``method`` is not "fro_norm" or "hsic".
     """
     if kernel not in ["linear", "rbf"]:
         raise ValueError("The chosen kernel must be either 'linear' or 'rbf'.")
@@ -57,11 +68,16 @@ def cka_base(
 
 
 def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    """Compute the minibatch version of CKA from Nguyen et al. (https://arxiv.org/abs/2010.15327). This computation is
-    performed with linear kernel and by calculating HSIC_1.
-    :param x: tensor of shape (bsz, n, j).
-    :param y: tensor of shape (bsz, n, k).
-    :return: a float tensor in [0, 1] that is the CKA value between the two given tensors.
+    """Compute the minibatch version of CKA from Nguyen et al. (https://arxiv.org/abs/2010.15327).
+
+    This computation is performed with linear kernel and by calculating HSIC_1.
+
+    Args:
+        x: tensor of shape (bsz, n, j).
+        y: tensor of shape (bsz, n, k).
+
+    Returns:
+        a float tensor in [0, 1] that is the CKA value between the two given tensors.
     """
     x = x.type(torch.float64) if not x.dtype == torch.float64 else x
     y = y.type(torch.float64) if not y.dtype == torch.float64 else y
