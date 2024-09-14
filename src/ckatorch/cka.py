@@ -1,14 +1,16 @@
 """Module for computing CKA in order to compare two PyTorch models through their layers' activations."""
 
 import inspect
+import json
 from collections.abc import Callable
 from functools import partial
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 from warnings import warn
 
-import matplotlib.pyplot as plt
-import seaborn as sn
 import torch
+import yaml
+from safetensors.torch import save_model
 from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -16,6 +18,7 @@ from tqdm import tqdm
 from transformers import PreTrainedModel
 
 from .core import cka_batch
+from .plot import plot_cka
 
 
 class CKA:
@@ -125,7 +128,8 @@ class CKA:
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
-        if first_model is second_model:
+        self._is_same_model = first_model is second_model
+        if self._is_same_model:
             second_name = first_name
         else:
             second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
@@ -310,65 +314,88 @@ class CKA:
         Raises:
             ValueError: if ``vmax`` or ``vmin`` are not defined together or both equal to None.
         """
-        # Deal with vmin and vmax
-        if (vmin is not None) ^ (vmax is not None):
-            raise ValueError("'vmin' and 'vmax' must be defined together or both equal to None.")
-
-        vmin = min(vmin, torch.min(cka_matrix).item()) if vmin is not None else vmin
-        vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
-
-        # Build the mask
-        mask = torch.tril(torch.ones_like(cka_matrix, dtype=torch.bool), diagonal=-1) if show_half_heatmap else None
-
-        # Build the heatmap
-        ax = sn.heatmap(
-            cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask.cpu().numpy()
+        plot_cka(
+            cka_matrix=cka_matrix,
+            first_layers=self.first_model_infos["layers"],
+            second_layers=self.second_model_infos["layers"],
+            first_name=self.first_model_infos["name"],
+            second_name=self.second_model_infos["name"],
+            save_path=save_path,
+            title=title,
+            vmin=vmin,
+            vmax=vmax,
+            cmap=cmap,
+            show_ticks_labels=show_ticks_labels,
+            short_tick_labels_splits=short_tick_labels_splits,
+            use_tight_layout=use_tight_layout,
+            show_annotations=show_annotations,
+            show_img=show_img,
+            show_half_heatmap=show_half_heatmap,
+            invert_y_axis=invert_y_axis,
         )
-        if invert_y_axis:
-            ax.invert_yaxis()
 
-        ax.set_xlabel(f"{self.second_model_infos['name']} layers", fontsize=12)
-        ax.set_ylabel(f"{self.first_model_infos['name']} layers", fontsize=12)
+    def save(
+        self,
+        cka_matrix: torch.Tensor,
+        save_weights: bool = False,
+        path: str | Path = "",
+        file_format: Literal["json", "yaml"] = "json",
+    ) -> None:
+        """Saves the CKA matrix and the infos about the models used during the computation.
 
-        # Deal with tick labels
-        if show_ticks_labels:
-            if short_tick_labels_splits is None:
-                ax.set_xticklabels(self.second_model_infos["name"])
-                ax.set_yticklabels(self.first_model_infos["name"])
+        Args:
+            cka_matrix: the CKA matrix.
+            save_weights: whether to save the weights of the models (default=False).
+            path: where to save the weights of the models and the file with their infos (default="").
+            file_format: in which format the output is saved, can be either 'json' or 'yaml' (default: "json").
+
+        Raises:
+            ValueError: if ``file_format`` not in ['json', 'yaml'].
+        """
+        # Obtain infos about the two models
+        first_name, first_layers = self.first_model_infos["name"], self.first_model_infos["layers"]
+        second_name, second_layers = self.second_model_infos["name"], self.second_model_infos["layers"]
+        first_name, second_name = first_name.replace(" ", "_"), second_name.replace(" ", "_")
+
+        # Save the models' weights if requested
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        first_model_path, second_model_path = None, None
+        if save_weights:
+            first_model_path = f"{path}/{first_name}.safetensors"
+            second_model_path = f"{path}/{second_name}.safetensors"
+            if hasattr(self, "first_model"):
+                first_model = self.first_model
+                second_model = self.second_model
             else:
-                ax.set_xticklabels(
-                    [
-                        "-".join(module.split(".")[-short_tick_labels_splits:])
-                        for module in self.second_model_infos["layers"]
-                    ]
-                )
-                ax.set_yticklabels(
-                    [
-                        "-".join(module.split(".")[-short_tick_labels_splits:])
-                        for module in self.first_model_infos["layers"]
-                    ]
-                )
+                first_model = self.first_extractor
+                second_model = self.second_extractor
 
-            plt.xticks(rotation=90)
-            plt.yticks(rotation=0)
+            save_model(first_model, first_model_path)
+            if not self._is_same_model:
+                save_model(second_model, second_model_path)
 
-        # Put the title if passed
-        if title is not None:
-            ax.set_title(title, fontsize=14)
-        else:
-            title = f"{self.first_model_infos['name']} vs {self.second_model_infos['name']}"
-            ax.set_title(title, fontsize=14)
+        # Build the dict to dump
+        dict_to_save = {
+            "first_model": {
+                "weights": first_model_path,
+                "name": first_name,
+                "layers": first_layers,
+            },
+            "second_model": {
+                "weights": second_model_path,
+                "name": second_name,
+                "layers": second_layers,
+            },
+            "cka_matrix": cka_matrix.tolist(),
+        }
 
-        # Set the layout to tight if the corresponding parameter is True
-        if use_tight_layout:
-            plt.tight_layout()
-
-        # Save the plot to the specified path if defined
-        if save_path is not None:
-            title = title.replace("/", "-")
-            path_rel = f"{save_path}/{title}.png"
-            plt.savefig(path_rel, dpi=400, bbox_inches="tight")
-
-        # Show the image if the user chooses to do so
-        if show_img:
-            plt.show()
+        # Dump the dict
+        with open(f"{path}/cka.{file_format}", "w", encoding="utf-8") as dump_file:
+            match file_format:
+                case "json":
+                    json.dump(dict_to_save, dump_file, indent=4)
+                case "yaml":
+                    yaml.dump(dict_to_save, dump_file, indent=4)
+                case _:
+                    raise ValueError(f"Unsupported format '{file_format}'")
