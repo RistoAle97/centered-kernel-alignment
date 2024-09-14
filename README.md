@@ -6,8 +6,12 @@
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
 [![Pytorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://github.com/pytorch/pytorch)
 
----
 </div>
+
+> [!WARNING]
+> This repository has been built mainly for personal and academic since <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>[Captum](https://github.com/pytorch/captum) still needs to implement its variant of CKA. As such, do not expect it to work for every model.
+
+---
 
 ## :black_nib: About
 > [!NOTE]
