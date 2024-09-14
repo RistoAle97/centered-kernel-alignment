@@ -9,7 +9,7 @@
 </div>
 
 > [!WARNING]
-> This repository has been built mainly for personal and academic since <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>[Captum](https://github.com/pytorch/captum) still needs to implement its variant of CKA. As such, do not expect it to work for every model.
+> This repository has been built mainly for personal and academic use since <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>[Captum](https://github.com/pytorch/captum) still needs to implement its variant of CKA. As such, do not expect this project to work for every model.
 
 ---
 
@@ -45,17 +45,42 @@ with $\boldsymbol{K_i}=\boldsymbol{X_iX_i^T}$ and $\boldsymbol{L_i}=\boldsymbol{
 ---
 
 ## :package: Installation
-This project requires python >= 3.10. As first step, clone the repository
+This project requires python >= 3.10.
+
+
+### Create a new venv
+> [!NOTE]
+> This will create a new virtual environment in the working directory under .venv. If you create such venv with uv there will be no need to activate it since uv will find the env in the working directory or any parent directories.
+It highly advised to create a new virtual environment
+```bash
+# If you have uv installed
+uv venv
+
+# Otherwise
+python -m venv
+source .venv/bin/activate  # if you are on Linux
+.\.venv\Scripts\activate.bat  # if you are using the cmd on Windows
+.\.venv\Scripts\Activate.ps1  # if you are using the PowerShell on Windows
+```
+
+### Clone the repository
 ```bash
 git clone https://github.com/RistoAle97/centered-kernel-alignment
 ```
-Then, you can install the necessary packages with
-> [!WARNING]
-> This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch not compiled with CUDA if you are on Windows. If you want to use your GPU during the computation, you should follow the [official site](https://pytorch.org/)
+
+### Install the dependencies
+> [!NOTE]
+> This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch compiled with CUDA.
 ```bash
-pip install -r requirements.txt
+# If you have uv installed
+uv pip install -e
+uv pip install ckatorch[dev]  # if you want to commit something to the repo
+
+# Otherwise
+pip install -e
+pip install -e ckatorch[dev]  # same as for uv, remember to open a pull request
 ```
-Take a look at the `examples` directory to understand how to compute CKA in different scenarios.
+Take a look at the `examples` directory to understand how to compute CKA in two basic scenarios.
 
 ---
 
