@@ -51,7 +51,6 @@ This project requires python >= 3.10.
 ### Create a new venv
 > [!NOTE]
 > This will create a new virtual environment in the working directory under .venv. If you create such venv with uv there will be no need to activate it since uv will find the env in the working directory or any parent directories.
-It highly advised to create a new virtual environment
 ```bash
 # If you have uv installed
 uv venv
