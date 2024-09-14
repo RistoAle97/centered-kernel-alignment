@@ -1,3 +1,45 @@
+[build-system]
+requires = ["setuptools>=65.5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ckatorch"
+authors = [
+  {name = "Alessandro Ristori", email = "aleristori97@gmail.com"}
+]
+version = "1.0.0"
+description = "Centered Kernel Alignment in PyTorch"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+keywords = ["CKA", "Centered Kernel Aligment", "Neural Network Similarity", "Deep Learning"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "matplotlib>=3.8.0",
+    "seaborn>=0.12.2",
+    "torch>=2.3.1",
+    "torchvision>=0.18.1",
+    "tqdm>=4.66.1",
+    "transformers>=4.43.0",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.7.1",
+    "ruff>=0.6.5",
+    "typos>=1.24.5",
+]
+
+[project.urls]
+Repository = "https://github.com/RistoAle97/centered-kernel-alignment"
+
 [tool.ruff]
 line-length = 120
 output-format = "grouped"
@@ -33,3 +75,6 @@ convention = "google"
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.uv.pip]
+extra-index-url = ["https://download.pytorch.org/whl/cu124"]

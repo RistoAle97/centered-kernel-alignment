@@ -2,7 +2,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import BertModel, BertTokenizerFast
 
-from cka import CKA
+from ckatorch import CKA
 
 
 def tokenize(sentences_to_tokenize: dict[str, str]):

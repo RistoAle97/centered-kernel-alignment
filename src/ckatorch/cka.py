@@ -7,7 +7,6 @@ from typing import Any
 from warnings import warn
 
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sn
 import torch
 from torch import nn
@@ -311,16 +310,20 @@ class CKA:
         Raises:
             ValueError: if ``vmax`` or ``vmin`` are not defined together or both equal to None.
         """
-        # Deal with some arguments
+        # Deal with vmin and vmax
         if (vmin is not None) ^ (vmax is not None):
             raise ValueError("'vmin' and 'vmax' must be defined together or both equal to None.")
 
         vmin = min(vmin, torch.min(cka_matrix).item()) if vmin is not None else vmin
         vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
-        mask = np.tril(np.ones_like(cka_matrix.cpu(), dtype=bool), k=-1) if show_half_heatmap else None
+
+        # Build the mask
+        mask = torch.tril(torch.ones_like(cka_matrix, dtype=torch.bool), diagonal=-1) if show_half_heatmap else None
 
         # Build the heatmap
-        ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
+        ax = sn.heatmap(
+            cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask.cpu().numpy()
+        )
         if invert_y_axis:
             ax.invert_yaxis()
 

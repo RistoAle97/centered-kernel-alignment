@@ -3,7 +3,7 @@ from torch import nn
 from torch.functional import F
 from torch.utils.data import DataLoader, TensorDataset
 
-from cka import CKA
+from ckatorch import CKA
 
 
 class FF(nn.Module):
