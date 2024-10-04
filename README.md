@@ -62,23 +62,30 @@ source .venv/bin/activate  # if you are on Linux
 .\.venv\Scripts\Activate.ps1  # if you are using the PowerShell on Windows
 ```
 
-### Clone the repository
-```bash
-git clone https://github.com/RistoAle97/centered-kernel-alignment
-```
-
-### Install the dependencies
+### Install the package
 > [!NOTE]
 > This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch compiled with CUDA.
-```bash
-# If you have uv installed
-uv pip install -e centered-kernel-alignment
-uv pip install ckatorch[dev]  # if you want to commit something to the repo
 
-# Otherwise
-pip install -e centered-kernel-alignment
-pip install ckatorch[dev]  # same as for uv, remember to open a pull request
-```
+You can install the package by either:
+- _using pip_
+  ```bash
+  pip install git+https://github.com/RistoAle97/centered-kernel-alignment
+  ```
+  This will not install the `dev` dependencies listed in `pyproject.toml`.
+
+- _cloning the repository and installing the dependencies_
+  ```bash
+  git clone https://github.com/RistoAle97/centered-kernel-alignment
+
+  # If you have uv installed
+  uv pip install -e centered-kernel-alignment
+  uv pip install ckatorch[dev]  # if you want to commit something to the repo
+  
+  # Otherwise
+  pip install -e centered-kernel-alignment
+  pip install ckatorch[dev]  # same as for uv, remember to open a pull request afterwards
+  ```
+
 Take a look at the `examples` directory to understand how to compute CKA in two basic scenarios.
 
 ---
