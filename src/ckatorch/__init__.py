@@ -8,6 +8,7 @@ from .utils import center_gram_matrix, linear_kernel, rbf_kernel
 
 
 __all__ = [
+    "CKA",
     "center_gram_matrix",
     "cka_base",
     "cka_batch",
@@ -16,5 +17,4 @@ __all__ = [
     "linear_kernel",
     "plot_cka",
     "rbf_kernel",
-    "CKA",
 ]

@@ -80,7 +80,7 @@ You can install the package by either:
   # If you have uv installed
   uv pip install -e centered-kernel-alignment
   uv pip install ckatorch[dev]  # if you want to commit something to the repo
-  
+
   # Otherwise
   pip install -e centered-kernel-alignment
   pip install ckatorch[dev]  # same as for uv, remember to open a pull request afterwards
