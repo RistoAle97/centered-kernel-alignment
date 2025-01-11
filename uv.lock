@@ -84,7 +84,6 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
-    { name = "ruff" },
     { name = "seaborn" },
     { name = "torch" },
     { name = "torchvision" },
@@ -103,8 +102,7 @@ dev = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.8.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7.1" },
-    { name = "ruff", specifier = ">=0.9.1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.5" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.1" },
     { name = "seaborn", specifier = ">=0.12.2" },
     { name = "torch", specifier = ">=2.3.1" },
     { name = "torchvision", specifier = ">=0.18.1" },
