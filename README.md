@@ -47,7 +47,6 @@ with $\boldsymbol{K_i}=\boldsymbol{X_iX_i^T}$ and $\boldsymbol{L_i}=\boldsymbol{
 ## :package: Installation
 This project requires python >= 3.10.
 
-
 ### Create a new venv
 > [!NOTE]
 > This will create a new virtual environment in the working directory under .venv. If you create such venv with uv there will be no need to activate it since uv will find the env in the working directory or any parent directories.
@@ -91,6 +90,9 @@ Take a look at the `examples` directory to understand how to compute CKA in two 
 ---
 
 ## :framed_picture:	Plots
+> [!NOTE]
+> The comparison makes more sense if the models share a common architecture.
+
 Model compared with itself             |  Different models compared
 :-------------------------:|:-------------------------:
 ![Model compared with itself](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison_itself.png)  |  ![Model comparison](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison.png)
