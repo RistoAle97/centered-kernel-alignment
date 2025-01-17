@@ -49,13 +49,15 @@ This project requires python >= 3.10.
 
 ### Create a new venv
 > [!NOTE]
-> This will create a new virtual environment in the working directory under .venv. If you create such venv with uv there will be no need to activate it since uv will find the env in the working directory or any parent directories.
+> This will create a new virtual environment in the working directory under .venv.
 ```bash
 # If you have uv installed
 uv venv
 
 # Otherwise
 python -m venv .venv
+
+# Activate the virtual environment
 source .venv/bin/activate  # if you are on Linux
 .\.venv\Scripts\activate.bat  # if you are using the cmd on Windows
 .\.venv\Scripts\Activate.ps1  # if you are using the PowerShell on Windows
@@ -68,9 +70,18 @@ source .venv/bin/activate  # if you are on Linux
 You can install the package by either:
 - _using pip_
   ```bash
+  # Using uv, no dev dependencies
+  uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment
+
+  # Using uv, installing dev dependencies as well
+  uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment[dev]
+
+  # Using pip, no dev dependencies
   pip install git+https://github.com/RistoAle97/centered-kernel-alignment
+
+  # Using pip, installing dev dependencies as well
+  pip install "ckatorch[dev] @ git+https://github.com/RistoAle97/centered-kernel-alignment"
   ```
-  This will not install the `dev` dependencies listed in `pyproject.toml`.
 
 - _cloning the repository and installing the dependencies_
   ```bash
