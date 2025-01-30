@@ -18,6 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
@@ -50,7 +51,6 @@ ignore = [
     "E111", # Indentation is not a multiple of {indent_width}
     "E114", # Indentation is not a multiple of {indent_width} (comment)
     "E117", # Over-indented (comment)
-    "E501", # Line too long
 ]
 select = [
     "ARG", # Flake8 unused arguments

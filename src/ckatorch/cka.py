@@ -2,7 +2,10 @@
 
 import inspect
 import json
+import random
+import string
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 from typing import Any, Literal
@@ -10,7 +13,7 @@ from warnings import warn
 
 import torch
 import yaml
-from safetensors.torch import save_model
+from safetensors.torch import save_file
 from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.models.feature_extraction import create_feature_extractor
@@ -19,6 +22,14 @@ from transformers import PreTrainedModel
 
 from .core import cka_batch
 from .plot import plot_cka
+
+
+@dataclass
+class ModelInfo:
+    """Class for storing the model info."""
+
+    name: str
+    layers: list[str]
 
 
 class CKA:
@@ -136,9 +147,9 @@ class CKA:
             if first_name == second_name:
                 warn(f"Both models are called {first_name}. This may cause confusion when analyzing the results.")
 
-        # Set up the models infos
-        self.first_model_infos = {"name": first_name, "layers": layers}
-        self.second_model_infos = {"name": second_name, "layers": second_layers}
+        # Set up the models info
+        self.first_model_info = ModelInfo(first_name, layers)
+        self.second_model_info = ModelInfo(second_name, second_layers)
 
     def _hook(self, model: str, module_name: str, module: nn.Module, inp: torch.Tensor, out: torch.Tensor) -> None:
         del module, inp  # delete unused arguments so that we can pass the linter checks
@@ -155,14 +166,14 @@ class CKA:
         second_layers: list[str],
     ) -> tuple[list[str], list[str]]:
         # Only those layers that were found will be placed inside the following lists
-        filtered_layers = []
+        filtered_first_layers = []
         filtered_second_layers = []
 
         # Add hooks for the first model's layers
         for module_name, module in list(first_model.named_modules()):
             if module_name in layers:
                 module.register_forward_hook(partial(self._hook, "first", module_name))
-                filtered_layers.append(module_name)
+                filtered_first_layers.append(module_name)
 
         # Add hooks for the second model's layers
         for module_name, module in list(second_model.named_modules()):
@@ -171,13 +182,13 @@ class CKA:
                 filtered_second_layers.append(module_name)
 
         # One last check
-        if len(filtered_layers) == 0 or len(filtered_second_layers) == 0:
+        if len(filtered_first_layers) == 0 or len(filtered_second_layers) == 0:
             raise ValueError(
                 "No layers were found for one of the two models, please use 'model.named_modules()' in order to check"
                 "which layers can be passed to the method."
             )
 
-        return filtered_layers, filtered_second_layers
+        return filtered_first_layers, filtered_second_layers
 
     def __call__(
         self,
@@ -222,8 +233,8 @@ class CKA:
             self.second_extractor.eval()
 
         with torch.no_grad():
-            n = len(self.first_model_infos["layers"])
-            m = len(self.second_model_infos["layers"])
+            n = len(self.first_model_info.layers)
+            m = len(self.second_model_info.layers)
 
             # Iterate through the dataset
             num_batches = len(dataloader)
@@ -316,10 +327,10 @@ class CKA:
         """
         plot_cka(
             cka_matrix=cka_matrix,
-            first_layers=self.first_model_infos["layers"],
-            second_layers=self.second_model_infos["layers"],
-            first_name=self.first_model_infos["name"],
-            second_name=self.second_model_infos["name"],
+            first_layers=self.first_model_info.layers,
+            second_layers=self.second_model_info.layers,
+            first_name=self.first_model_info.name,
+            second_name=self.second_model_info.name,
             save_path=save_path,
             title=title,
             vmin=vmin,
@@ -337,65 +348,59 @@ class CKA:
     def save(
         self,
         cka_matrix: torch.Tensor,
-        save_weights: bool = False,
-        path: str | Path = "",
+        dir_path: str | Path = "",
         file_format: Literal["json", "yaml"] = "json",
     ) -> None:
-        """Saves the CKA matrix and the infos about the models used during the computation.
+        """Saves the CKA matrix and the info about the models used during the computation.
+
+        Note that the CKA matrix and the models' weights are saved as safetensors files and their paths are be stored
+        inside the json or yaml file.
 
         Args:
             cka_matrix: the CKA matrix.
-            save_weights: whether to save the weights of the models (default=False).
-            path: where to save the weights of the models and the file with their infos (default="").
+            dir_path: where to save the weights of the models and the file with their info (default="").
             file_format: in which format the output is saved, can be either 'json' or 'yaml' (default: "json").
 
         Raises:
             ValueError: if ``file_format`` not in ['json', 'yaml'].
         """
-        # Obtain infos about the two models
-        first_name, first_layers = self.first_model_infos["name"], self.first_model_infos["layers"]
-        second_name, second_layers = self.second_model_infos["name"], self.second_model_infos["layers"]
+        # Obtain info about the two models
+        first_name, first_layers = self.first_model_info.name, self.first_model_info["layers"]
+        second_name, second_layers = self.second_model_info.name, self.second_model_info.layers
         first_name, second_name = first_name.replace(" ", "_"), second_name.replace(" ", "_")
 
-        # Save the models' weights if requested
-        path = Path(path)
-        path.mkdir(parents=True, exist_ok=True)
-        first_model_path, second_model_path = None, None
-        if save_weights:
-            first_model_path = f"{path}/{first_name}.safetensors"
-            second_model_path = f"{path}/{second_name}.safetensors"
-            if hasattr(self, "first_model"):
-                first_model = self.first_model
-                second_model = self.second_model
-            else:
-                first_model = self.first_extractor
-                second_model = self.second_extractor
+        # Save the CKA matrix
+        dir_path = Path(dir_path)
+        dir_path.mkdir(parents=True, exist_ok=True)
+        cka_tensor_path = dir_path / "cka.safetensors"
+        cka_info_path = dir_path / f"cka.{file_format}"
+        if cka_tensor_path.exists():
+            # If the file already exists, change the name by appending five random characters
+            random_str = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(5))
+            cka_tensor_path = dir_path / f"cka_{random_str}.safetensors"
+            cka_info_path = dir_path / f"cka_{random_str}.{file_format}"
 
-            save_model(first_model, first_model_path)
-            if not self._is_same_model:
-                save_model(second_model, second_model_path)
+        save_file({"cka": cka_matrix}, cka_tensor_path)
 
         # Build the dict to dump
-        dict_to_save = {
+        cka_info = {
             "first_model": {
-                "weights": first_model_path,
                 "name": first_name,
                 "layers": first_layers,
             },
             "second_model": {
-                "weights": second_model_path,
                 "name": second_name,
                 "layers": second_layers,
             },
-            "cka_matrix": cka_matrix.tolist(),
+            "cka_matrix": cka_tensor_path.absolute(),
         }
 
         # Dump the dict
-        with open(f"{path}/cka.{file_format}", "w", encoding="utf-8") as dump_file:
+        with open(cka_info_path, "w", encoding="utf-8") as dump_file:
             match file_format:
                 case "json":
-                    json.dump(dict_to_save, dump_file, indent=4)
+                    json.dump(cka_info, dump_file, indent=4)
                 case "yaml":
-                    yaml.dump(dict_to_save, dump_file, indent=4)
+                    yaml.dump(cka_info, dump_file, indent=4)
                 case _:
                     raise ValueError(f"Unsupported format '{file_format}'")
