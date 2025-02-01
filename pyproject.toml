@@ -23,6 +23,7 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib>=3.8.0",
+    "safetensors>=0.4.2",
     "seaborn>=0.12.2",
     "torch>=2.3.1",
     "torchvision>=0.18.1",
