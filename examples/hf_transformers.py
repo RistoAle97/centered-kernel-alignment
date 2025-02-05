@@ -40,7 +40,6 @@ if __name__ == "__main__":
         second_model=first_model,
         layers=layers,
         first_name="Bert",
-        use_hooks=True,
         device="cuda:0",
     )
     cka_different_models = CKA(
@@ -49,7 +48,6 @@ if __name__ == "__main__":
         layers=layers,
         first_name="Bert_0",
         second_name="Bert_1",
-        use_hooks=True,
         device="cuda:0",
     )
 
@@ -66,7 +64,7 @@ if __name__ == "__main__":
     }
     cka_same_model.plot_cka(
         cka_matrix=cka_matrix_same,
-        title=f"Model {cka_same_model.first_model_infos['name']} compared with itself",
+        title=f"Model {cka_same_model.first_model_info.name} compared with itself",
         **plot_parameters,
     )
     cka_different_models.plot_cka(cka_matrix=cka_matrix_different, **plot_parameters)

@@ -26,21 +26,10 @@ class ManyFF(nn.Module):
     def __init__(self) -> None:
         """Many feed-forward networks one after the other."""
         super().__init__()
-        self.first_ff = FF()
-        self.second_ff = FF()
-        self.third_ff = FF()
-        self.fourth_ff = FF()
-        self.fifth_ff = FF()
-        self.sixth_ff = FF()
+        self.model = nn.Sequential(FF(), FF(), FF(), FF(), FF(), FF())
 
     def forward(self, src: torch.Tensor) -> torch.Tensor:
-        out = self.first_ff(src)
-        out = self.second_ff(out)
-        out = self.third_ff(out)
-        out = self.fourth_ff(out)
-        out = self.fifth_ff(out)
-        out = self.sixth_ff(out)
-        return out
+        return self.model(src)
 
 
 if __name__ == "__main__":
@@ -53,20 +42,19 @@ if __name__ == "__main__":
 
     # Define the layers that will be used during the computation
     layers_to_observe = [
-        "first_ff.linear1",
-        "second_ff.linear1",
-        "third_ff.linear1",
-        "fourth_ff.linear1",
-        "fifth_ff.linear1",
-        "sixth_ff.linear1",
+        "model.0.linear1",
+        "model.1.linear1",
+        "model.2.linear1",
+        "model.3.linear1",
+        "model.4.linear1",
+        "model.5.linear1",
     ]
 
     # Define the shared parameters between the two CKA objects
     shared_parameters = {
         "layers": layers_to_observe,
         "first_name": "ManyFF_0",
-        "use_hooks": False,
-        "device": "cuda:0",
+        "device": torch.device("cuda:0") if torch.cuda.is_available() else "cpu",
     }
 
     # Build the CKA objects, one for confronting a model with itself and the other for comparing two different models
@@ -99,7 +87,7 @@ if __name__ == "__main__":
     }
     cka_same_model.plot_cka(
         cka_matrix=cka_matrix_same,
-        title=f"Model {cka_same_model.first_model_infos['name']} compared with itself",
+        title=f"Model {cka_same_model.first_model_info.name} compared with itself",
         **plot_parameters,
     )
     cka_different_models.plot_cka(cka_matrix=cka_matrix_different, **plot_parameters)

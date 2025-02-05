@@ -16,9 +16,7 @@ import yaml
 from safetensors.torch import save_file
 from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
-from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
-from transformers import PreTrainedModel
 
 from .core import cka_batch
 from .plot import plot_cka
@@ -46,11 +44,8 @@ class CKA:
         second_model: nn.Module,
         layers: list[str],
         second_layers: list[str] | None = None,
-        first_leaf_modules: list[type[nn.Module]] | None = None,
-        second_leaf_modules: list[type[nn.Module]] | None = None,
         first_name: str | None = None,
         second_name: str | None = None,
-        use_hooks: bool = False,
         device: str | torch.device = "cpu",
     ) -> None:
         """Initializes a CKA object.
@@ -61,14 +56,8 @@ class CKA:
             layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will count
                 for the second model too).
             second_layers: list of layers from the second model under inspection (default=None).
-            first_leaf_modules: list of problematic layers that will not be traced by the first extractor, this
-                parameter will not have any effect if ``use_hooks`` is True (default=None).
-            second_leaf_modules: list of problematic layers that will not be traced by the second extractor, this
-                parameter will not have any effect if ``use_hooks`` is True (default=None).
             first_name: name of the first model (default=None).
             second_name: name of the second model (default=None).
-            use_hooks: whether to use hooks instead of the feature extractors. This parameter will be forcibly set as
-                True in case you are working with a HuggingFace model(default=False).
             device: the device used during the computation (default="cpu").
 
         Raises:
@@ -112,35 +101,14 @@ class CKA:
         self.first_features: dict[str, torch.Tensor] = {}
         self.second_features: dict[str, torch.Tensor] = {}
 
-        # The CKA computation can be performed through hooks or feature extractors, the results will be the same
-        self.use_hooks = use_hooks
-        if use_hooks or isinstance(first_model, PreTrainedModel) or isinstance(second_model, PreTrainedModel):
-            # Insert a hook for each layer
-            layers, second_layers = self._insert_hooks(first_model, second_model, layers, second_layers)
-            self.first_model = first_model.to(device)
-            self.second_model = second_model.to(device)
-        else:
-            # Deal with the non-traceable layers
-            first_tracer_kwargs = {"leaf_modules": first_leaf_modules} if first_leaf_modules is not None else None
-            second_tracer_kwargs = {"leaf_modules": second_leaf_modules} if second_leaf_modules is not None else None
-
-            # Build the extractors, they work like a normal torch.nn.Module, but their output is a dict containing the
-            # features of each layer under their scope.
-            self.first_extractor = create_feature_extractor(
-                model=first_model,
-                return_nodes=layers,
-                tracer_kwargs=first_tracer_kwargs,
-            ).to(self.device)
-            self.second_extractor = create_feature_extractor(
-                model=second_model,
-                return_nodes=second_layers,
-                tracer_kwargs=second_tracer_kwargs,
-            ).to(self.device)
+        # Insert a hook for each layer
+        layers, second_layers = self._insert_hooks(first_model, second_model, layers, second_layers)
+        self.first_model = first_model.to(device)
+        self.second_model = second_model.to(device)
 
         # Manage the models names
         first_name = first_name if first_name is not None else first_model.__repr__().split("(")[0]
-        self._is_same_model = first_model is second_model
-        if self._is_same_model:
+        if first_model is second_model:
             second_name = first_name
         else:
             second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
@@ -225,12 +193,8 @@ class CKA:
         if not isinstance(dataloader.sampler, RandomSampler):
             warn("We suggest setting 'shuffle=True' in your dataloader in order to have a less biased computation.")
 
-        if self.use_hooks:
-            self.first_model.eval()
-            self.second_model.eval()
-        else:
-            self.first_extractor.eval()
-            self.second_extractor.eval()
+        self.first_model.eval()
+        self.second_model.eval()
 
         with torch.no_grad():
             n = len(self.first_model_info.layers)
@@ -250,7 +214,7 @@ class CKA:
                         batch = f_extract(batch, **f_args)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
-                        arg_method = self.first_model.forward if self.use_hooks else self.first_extractor.forward
+                        arg_method = self.first_model.forward
                         args_list = inspect.getfullargspec(arg_method).args[1:]  # skip "self" arg
                         batch = {f"{args_list[i]}": batch_input.to(self.device) for i, batch_input in enumerate(batch)}
                     elif not isinstance(batch, dict):
@@ -260,14 +224,10 @@ class CKA:
                         )
 
                     # Do a forward pass for both models
-                    if self.use_hooks:
-                        _ = self.first_model(**batch)
-                        _ = self.second_model(**batch)
-                        first_outputs = self.first_features
-                        second_outputs = self.second_features
-                    else:
-                        first_outputs = self.first_extractor(**batch)
-                        second_outputs = self.second_extractor(**batch)
+                    _ = self.first_model(**batch)
+                    _ = self.second_model(**batch)
+                    first_outputs = self.first_features
+                    second_outputs = self.second_features
 
                     # Compute the CKA values for each output pair
                     for i, (_, x) in enumerate(first_outputs.items()):
