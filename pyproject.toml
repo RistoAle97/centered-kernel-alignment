@@ -47,11 +47,6 @@ output-format = "grouped"
 target-version = "py310"
 
 [tool.ruff.lint]
-ignore = [
-    "E111", # Indentation is not a multiple of {indent_width}
-    "E114", # Indentation is not a multiple of {indent_width} (comment)
-    "E117", # Over-indented (comment)
-]
 select = [
     "ARG", # Flake8 unused arguments
     "D", # Pydocstyle errors
