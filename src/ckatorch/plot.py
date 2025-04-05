@@ -27,27 +27,30 @@ def plot_cka(
     """Plot the CKA matrix obtained by calling CKA class __call__() method.
 
     Args:
-        cka_matrix: the CKA matrix.
-        first_layers: list of the names of the first model's layers.
-        second_layers: list of the names of the second model's layers.
-        first_name: name of the first model (default='First Model').
-        second_name: name of the second model (default='Second Model').
-        save_path: the path where to save the plot, if None then the plot will not be saved (default=None).
-        title: the plot title, if None then a simple text with the name of both models will be used (default=None).
-        vmin: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
-        vmax: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
-        cmap: the name of the colormap to use (default: 'magma').
-        show_ticks_labels: whether to show the tick labels (default=False).
-        short_tick_labels_splits: only works when show_tick_labels is True. If it is not None, the tick labels will
-            be shortened to the defined sublayer starting from the deepest level. E.g.: if the layer name is
-            'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on the heatmap
+        cka_matrix (torch.Tensor): the CKA matrix.
+        first_layers (list[str]): list of the names of the first model's layers.
+        second_layers (list[str]): list of the names of the second model's layers.
+        first_name (str): name of the first model (default="First Model").
+        second_name (str): name of the second model (default="Second Model").
+        save_path (str | None): where to save the plot, if None then the plot will not be saved (default=None).
+        title (str | None): the plot title, if None then a simple text with the name of both models will be used
             (default=None).
-        use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
-        show_annotations: whether to show the annotations on the heatmap (default=True).
-        show_img: whether to show the plot (default=True).
-        show_half_heatmap: whether to mask the upper left part of the heatmap since those valued are duplicates
+        vmin (float | None): values to anchor the colormap, otherwise they are inferred from the data and other keyword
+            arguments (default=None).
+        vmax (float | None): values to anchor the colormap, otherwise they are inferred from the data and other keyword
+            arguments (default=None).
+        cmap (str): the name of the colormap to use (default="magma").
+        show_ticks_labels (bool): whether to show the tick labels (default=False).
+        short_tick_labels_splits (int | None): only works when show_tick_labels is True. If it is not None, the tick
+            labels will be shortened to the defined sublayer starting from the deepest level. E.g.: if the layer name
+            is 'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on the heatmap
+            (default=None).
+        use_tight_layout (bool): whether to use a tight layout in order not to cut any label in the plot (default=True).
+        show_annotations (bool): whether to show the annotations on the heatmap (default=True).
+        show_img (bool): whether to show the plot (default=True).
+        show_half_heatmap (bool): whether to mask the upper left part of the heatmap since those valued are duplicates
             (default=False).
-        invert_y_axis: whether to invert the y-axis of the plot (default=True).
+        invert_y_axis (bool): whether to invert the y-axis of the plot (default=True).
 
     Raises:
         ValueError: if ``vmax`` or ``vmin`` are not defined together or both equal to None.

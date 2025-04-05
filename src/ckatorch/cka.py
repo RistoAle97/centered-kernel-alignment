@@ -51,14 +51,14 @@ class CKA:
         """Initializes a CKA object.
 
         Args:
-            first_model: the first model whose layer features we want to compare.
-            second_model: the second model whose layer features we want to compare.
-            layers: list of layers name under inspection (if no "second_layers" is provided, then the layers will count
-                for the second model too).
-            second_layers: list of layers from the second model under inspection (default=None).
-            first_name: name of the first model (default=None).
-            second_name: name of the second model (default=None).
-            device: the device used during the computation (default="cpu").
+            first_model (torch.nn.Module): the first model whose layer features we want to compare.
+            second_model (torch.nn.Module): the second model whose layer features we want to compare.
+            layers (list[str]): list of layers name under inspection (if no "second_layers" is provided, then the
+                layers will count for the second model too).
+            second_layers (list[str]): list of layers from the second model under inspection (default=None).
+            first_name (str | None): name of the first model (default=None).
+            second_name (str | None): name of the second model (default=None).
+            device (str | torch.device): the device used during the computation (default="cpu").
 
         Raises:
             ValueError: if ``layers`` is None or empty.
@@ -170,15 +170,15 @@ class CKA:
         This computation employs the minibatch version of CKA by Nguyen et al. (https://arxiv.org/abs/2010.15327).
 
         Args:
-            dataloader: dataloader that will be used during the computation.
-            epochs: number of iterations over the dataloader (default=10).
-            f_extract: the function to apply on the dataloader, this function should take any number and type of inputs
-                and return a dict. If no function is passed, then some checks will be applied for finding the actual
-                type of the batch (default=None).
-            f_args: the arguments passed to the f_extract function (default=None).
+            dataloader (torch.utils.data.Dataloader): dataloader that will be used during the computation.
+            epochs (int): number of iterations over the dataloader (default=10).
+            f_extract (Callable[..., dict[str, torch.Tensor]] | None): the function to apply on the dataloader, this
+                function should take any number and type of inputs and return a dict. If no function is passed, then
+                some checks will be applied for finding the actual type of the batch (default=None).
+            f_args (dict[str, Any] | None): the arguments passed to the f_extract function (default=None).
 
         Returns:
-            a tensor with the CKA matrix.
+            torch.Tensor: a tensor representing the CKA matrix.
 
         Raises:
             ValueError: if the parameter 'drop_last' of the dataloader is set to True or if the batch type is not
@@ -264,23 +264,28 @@ class CKA:
         """Plot the CKA matrix obtained by calling this class' __call__() method.
 
         Args:
-            cka_matrix: the CKA matrix.
-            save_path: the path where to save the plot, if None then the plot will not be saved (default=None).
-            title: the plot title, if None then a simple text with the name of both models will be used (default=None).
-            vmin: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
-            vmax: values to anchor the colormap, otherwise they are inferred from the data and other keyword arguments.
-            cmap: the name of the colormap to use (default: 'magma').
-            show_ticks_labels: whether to show the tick labels (default=False).
-            short_tick_labels_splits: only works when show_tick_labels is True. If it is not None, the tick labels will
-                be shortened to the defined sublayer starting from the deepest level. E.g.: if the layer name is
-                'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on the heatmap
+            cka_matrix (torch.Tensor): the CKA matrix.
+            save_path (str | None): where to save the plot, if None then the plot will not be saved (default=None).
+            title (str | None): the plot title, if None then a simple text with the name of both models will be used
                 (default=None).
-            use_tight_layout: whether to use a tight layout in order not to cut any label in the plot (default=True).
-            show_annotations: whether to show the annotations on the heatmap (default=True).
-            show_img: whether to show the plot (default=True).
-            show_half_heatmap: whether to mask the upper left part of the heatmap since those valued are duplicates
-                (default=False).
-            invert_y_axis: whether to invert the y-axis of the plot (default=True).
+            vmin (float | None): values to anchor the colormap, otherwise they are inferred from the data and other
+                keyword arguments (default=None).
+            vmax (float | None): values to anchor the colormap, otherwise they are inferred from the data and other
+                keyword arguments (default=None).
+            cmap (str): the name of the colormap to use (default="magma").
+            show_ticks_labels (bool): whether to show the tick labels (default=False).
+            short_tick_labels_splits (int | None): only works when show_tick_labels is True. If it is not None, the
+                tick labels will be shortened to the defined sublayer starting from the deepest level. E.g.: if the
+                layer name is 'encoder.ff.linear' and this parameter is set to 1, then only 'linear' will be printed on
+                the heatmap (default=None).
+            use_tight_layout (bool): whether to use a tight layout in order not to cut any label in the plot
+                (default=True).
+            show_annotations (bool): whether to show the annotations on the heatmap (default=True).
+            show_img (bool): whether to show the plot (default=True).
+            show_half_heatmap (bool): whether to mask the upper left part of the heatmap since those valued are
+                duplicates (default=False).
+            invert_y_axis (bool): whether to invert the y-axis of the plot (default=True).
+
 
         Raises:
             ValueError: if ``vmax`` or ``vmin`` are not defined together or both equal to None.
@@ -317,9 +322,11 @@ class CKA:
         inside the json or yaml file.
 
         Args:
-            cka_matrix: the CKA matrix.
-            dir_path: where to save the weights of the models and the file with their info (default="").
-            file_format: in which format the output is saved, can be either 'json' or 'yaml' (default: "json").
+            cka_matrix (torch.Tensor): the CKA matrix.
+            dir_path (str | pathlib.Path): where to save the weights of the models and the file with their info
+                (default="").
+            file_format (Literal["json", "yaml"]): in which format the output is saved, can be either 'json' or 'yaml'
+                (default: "json").
 
         Raises:
             ValueError: if ``file_format`` not in ['json', 'yaml'].

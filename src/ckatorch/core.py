@@ -22,17 +22,18 @@ def cka_base(
     https://github.com/google-research/google-research/tree/master/representation_similarity.
 
     Args:
-        x: tensor of shape (n, j).
-        y: tensor of shape (n, k).
-        kernel: the kernel used to compute the Gram matrices, must be "linear" or "rbf" (default="linear).
-        unbiased: whether to use the unbiased version of CKA (default=False).
-        threshold: the threshold used by the RBF kernel (default=1.0).
-        method: the method used to compute the CKA value, must be "fro_norm" (Frobenius norm) or "hsic"
-            (Hilbert-Schmidt Independence Criterion). Note that the choice does not influence the output
-            (default="fro_norm").
+        x (torch.Tensor): tensor of shape (n, j).
+        y (torch.Tensor): tensor of shape (n, k).
+        kernel (Literal["linear", "rbf"]): the kernel used to compute the Gram matrices, must be "linear" or "rbf"
+            (default="linear").
+        unbiased (bool): whether to use the unbiased version of CKA (default=False).
+        threshold (float): the threshold used by the RBF kernel (default=1.0).
+        method (Literal["fro_norm", "hsic"]): the method used to compute the CKA value, must be "fro_norm"
+            (Frobenius norm) or "hsic" (Hilbert-Schmidt Independence Criterion). Note that the choice does not
+            influence the output (default="fro_norm").
 
     Returns:
-        a float tensor in [0, 1] that is the CKA value between the two given matrices.
+        torch.Tensor: a float tensor in [0, 1] that is the CKA value between the two given matrices.
 
     Raises:
         ValueError: if ``kernel`` is not "linear" or "rbf" or if ``method`` is not "fro_norm" or "hsic".
@@ -73,11 +74,11 @@ def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     This computation is performed with linear kernel and by calculating HSIC_1.
 
     Args:
-        x: tensor of shape (bsz, n, j).
-        y: tensor of shape (bsz, n, k).
+        x (torch.Tensor): tensor of shape (bsz, n, j).
+        y (torch.Tensor): tensor of shape (bsz, n, k).
 
     Returns:
-        a float tensor in [0, 1] that is the CKA value between the two given tensors.
+        torch.Tensor: a float tensor in [0, 1] that is the CKA value between the two given tensors.
     """
     x = x.type(torch.float64) if not x.dtype == torch.float64 else x
     y = y.type(torch.float64) if not y.dtype == torch.float64 else y

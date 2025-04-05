@@ -10,10 +10,10 @@ def linear_kernel(x: torch.Tensor) -> torch.Tensor:
     https://github.com/google-research/google-research/tree/master/representation_similarity.
 
     Args:
-        x: tensor of shape (n, m).
+        x (torch.Tensor): tensor of shape (n, m).
 
     Returns:
-        a Gram matrix which is a tensor of shape (n, n).
+        torch.Tensor: a Gram matrix which is a tensor of shape (n, n).
     """
     return torch.mm(x, x.T)
 
@@ -25,11 +25,11 @@ def rbf_kernel(x: torch.Tensor, threshold: float = 1.0) -> torch.Tensor:
     https://github.com/google-research/google-research/tree/master/representation_similarity.
 
     Args:
-        x: tensor of shape (n, m).
-        threshold: fraction of median Euclidean distance to use as RBF kernel bandwidth (default=1.0).
+        x (torch.Tensor): tensor of shape (n, m).
+        threshold (float): fraction of median Euclidean distance to use as RBF kernel bandwidth (default=1.0).
 
     Returns:
-        a Gram matrix which is a tensor of shape (n, n).
+        torch.Tensor: a Gram matrix which is a tensor of shape (n, n).
     """
     dot_products = torch.mm(x, x.T)
     sq_norms = torch.diag(dot_products)
@@ -45,11 +45,11 @@ def center_gram_matrix(gram_matrix: torch.Tensor, unbiased: bool = False) -> tor
     https://github.com/google-research/google-research/tree/master/representation_similarity.
 
     Args:
-        gram_matrix: tensor of shape (n, n).
-        unbiased: whether to use the unbiased version of the centering (default=False).
+        gram_matrix (torch.Tensor): tensor of shape (n, n).
+        unbiased (bool): whether to use the unbiased version of the centering (default=False).
 
     Returns:
-        the centered version of the given Gram matrix.
+        torch.Tensor: the centered version of the given Gram matrix.
     """
     if not torch.allclose(gram_matrix, gram_matrix.T):
         raise ValueError("The given matrix must be symmetric.")

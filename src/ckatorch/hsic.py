@@ -7,11 +7,11 @@ def hsic0(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
     """Compute the Hilbert-Schmidt Independence Criterion on two given Gram matrices.
 
     Args:
-        gram_x: Gram matrix of shape (n, n), this is equivalent to K from the original paper.
-        gram_y: Gram matrix of shape (n, n), this is equivalent to L from the original paper.
+        gram_x (torch.Tensor): Gram matrix of shape (n, n), this is equivalent to K from the original paper.
+        gram_y (torch.Tensor): Gram matrix of shape (n, n), this is equivalent to L from the original paper.
 
     Returns:
-        a tensor with the Hilbert-Schmidt Independence Criterion values.
+        torch.Tensor: a tensor with the Hilbert-Schmidt Independence Criterion values.
 
     Raises:
         ValueError: if ``gram_x`` and ``gram_y`` are not symmetric.
@@ -42,15 +42,15 @@ def hsic1(gram_x: torch.Tensor, gram_y: torch.Tensor) -> torch.Tensor:
     https://github.com/numpee/CKA.pytorch/blob/07874ec7e219ad29a29ee8d5ebdada0e1156cf9f/cka.py#L107.
 
     Args:
-        gram_x: batch of Gram matrices of shape (bsz, n, n).
-        gram_y: batch of Gram matrices of shape (bsz, n, n).
+        gram_x (torch.Tensor): batch of Gram matrices of shape (bsz, n, n).
+        gram_y (torch.Tensor): batch of Gram matrices of shape (bsz, n, n).
 
     Returns:
-        a tensor with the unbiased Hilbert-Schmidt Independence Criterion values.
+        torch.Tensor: a tensor with the unbiased Hilbert-Schmidt Independence Criterion values.
 
     Raises:
         ValueError: if ``gram_x`` and ``gram_y`` do not have the same shape or if they do not have exactly three
-        dimensions.
+            dimensions.
     """
     if len(gram_x.size()) != 3 or gram_x.size() != gram_y.size():
         raise ValueError("Invalid size for one of the two input tensors.")
