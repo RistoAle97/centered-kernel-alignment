@@ -98,7 +98,7 @@ def plot_cka(
 
     # Save the plot to the specified path if defined
     if save_path is not None:
-        title = title.replace("/", "-")
+        title = title.replace(" ", "_").replace("/", "-")
         path_rel = f"{save_path}/{title}.png"
         plt.savefig(path_rel, dpi=400, bbox_inches="tight")
 

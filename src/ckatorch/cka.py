@@ -3,9 +3,10 @@
 import inspect
 import json
 import random
+import re
 import string
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import partial
 from pathlib import Path
 from typing import Any, Literal
@@ -13,7 +14,7 @@ from warnings import warn
 
 import torch
 import yaml
-from safetensors.torch import save_file
+from safetensors.torch import save_file, save_model
 from torch import nn
 from torch.utils.data import DataLoader, RandomSampler
 from tqdm import tqdm
@@ -55,7 +56,7 @@ class CKA:
             second_model (torch.nn.Module): the second model whose layer features we want to compare.
             layers (list[str]): list of layers name under inspection (if no "second_layers" is provided, then the
                 layers will count for the second model too).
-            second_layers (list[str]): list of layers from the second model under inspection (default=None).
+            second_layers (list[str] | None): list of layers from the second model under inspection (default=None).
             first_name (str | None): name of the first model (default=None).
             second_name (str | None): name of the second model (default=None).
             device (str | torch.device): the device used during the computation (default="cpu").
@@ -116,6 +117,8 @@ class CKA:
                 warn(f"Both models are called {first_name}. This may cause confusion when analyzing the results.")
 
         # Set up the models info
+        first_name = re.sub("[^0-9a-zA-Z_]+", "", first_name.replace(" ", "_"))
+        second_name = re.sub("[^0-9a-zA-Z_]+", "", second_name.replace(" ", "_"))
         self.first_model_info = ModelInfo(first_name, layers)
         self.second_model_info = ModelInfo(second_name, second_layers)
 
@@ -315,6 +318,7 @@ class CKA:
         cka_matrix: torch.Tensor,
         dir_path: str | Path = "",
         file_format: Literal["json", "yaml"] = "json",
+        save_models: bool = False,
     ) -> None:
         """Saves the CKA matrix and the info about the models used during the computation.
 
@@ -327,40 +331,42 @@ class CKA:
                 (default="").
             file_format (Literal["json", "yaml"]): in which format the output is saved, can be either 'json' or 'yaml'
                 (default: "json").
+            save_models (bool): whether to also save the models used for the CKA computation (default=False).
 
         Raises:
             ValueError: if ``file_format`` not in ['json', 'yaml'].
         """
-        # Obtain info about the two models
-        first_name, first_layers = self.first_model_info.name, self.first_model_info["layers"]
-        second_name, second_layers = self.second_model_info.name, self.second_model_info.layers
-        first_name, second_name = first_name.replace(" ", "_"), second_name.replace(" ", "_")
-
         # Save the CKA matrix
         dir_path = Path(dir_path)
         dir_path.mkdir(parents=True, exist_ok=True)
         cka_tensor_path = dir_path / "cka.safetensors"
         cka_info_path = dir_path / f"cka.{file_format}"
+        random_str = ""
         if cka_tensor_path.exists():
             # If the file already exists, change the name by appending five random characters
-            random_str = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(5))
-            cka_tensor_path = dir_path / f"cka_{random_str}.safetensors"
-            cka_info_path = dir_path / f"cka_{random_str}.{file_format}"
+            random_str = "_" + "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(5))
+            cka_tensor_path = dir_path / f"cka{random_str}.safetensors"
+            cka_info_path = dir_path / f"cka{random_str}.{file_format}"
 
         save_file({"cka": cka_matrix}, cka_tensor_path)
 
         # Build the dict to dump
         cka_info = {
-            "first_model": {
-                "name": first_name,
-                "layers": first_layers,
+            "cka_matrix": {
+                "path": str(cka_tensor_path.absolute()),
             },
-            "second_model": {
-                "name": second_name,
-                "layers": second_layers,
-            },
-            "cka_matrix": cka_tensor_path.absolute(),
+            "first_model": asdict(self.first_model_info),
+            "second_model": asdict(self.second_model_info),
         }
+
+        # Save the models if requested
+        if save_models:
+            first_model_path = dir_path / f"{self.first_model_info.name}{random_str}.safetensors"
+            second_model_path = dir_path / f"{self.second_model_info.name}{random_str}.safetensors"
+            save_model(self.first_model, first_model_path)
+            save_model(self.second_model, second_model_path)
+            cka_info["first_model"]["path"] = str(first_model_path.absolute())
+            cka_info["second_model"]["path"] = str(second_model_path.absolute())
 
         # Dump the dict
         with open(cka_info_path, "w", encoding="utf-8") as dump_file:
