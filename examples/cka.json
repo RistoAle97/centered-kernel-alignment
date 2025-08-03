@@ -1,0 +1,27 @@
+{
+    "cka_matrix": {
+        "path": "cka.safetensors"
+    },
+    "first_model": {
+        "name": "ManyFF_0",
+        "layers": [
+            "model.0.linear1",
+            "model.1.linear1",
+            "model.2.linear1",
+            "model.3.linear1",
+            "model.4.linear1",
+            "model.5.linear1"
+        ]
+    },
+    "second_model": {
+        "name": "ManyFF_0",
+        "layers": [
+            "model.0.linear1",
+            "model.1.linear1",
+            "model.2.linear1",
+            "model.3.linear1",
+            "model.4.linear1",
+            "model.5.linear1"
+        ]
+    }
+}

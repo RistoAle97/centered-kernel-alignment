@@ -9,3 +9,4 @@
 ## :pushpin: Examples
 - Comparison between two models, each consisting of a stack of feed-forward networks. This is the simplest example and should be used as a starting point.
 - Comparison between two randomly initialized Bert models using the HuggingFace libraries.
+- Loading and plotting a previously saved CKA matrix.
