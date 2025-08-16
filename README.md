@@ -70,17 +70,11 @@ source .venv/bin/activate  # if you are on Linux
 You can install the package by either:
 - _using pip_
   ```bash
-  # Using uv, no dev dependencies
+  # Using uv
   uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment
 
-  # Using uv, installing dev dependencies as well
-  uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment[dev]
-
-  # Using pip, no dev dependencies
+  # Using pip
   pip install git+https://github.com/RistoAle97/centered-kernel-alignment
-
-  # Using pip, installing dev dependencies as well
-  pip install "ckatorch[dev] @ git+https://github.com/RistoAle97/centered-kernel-alignment"
   ```
 
 - _cloning the repository and installing the dependencies_
@@ -89,11 +83,11 @@ You can install the package by either:
 
   # If you have uv installed
   uv pip install -e centered-kernel-alignment
-  uv pip install ckatorch[dev]  # if you want to commit something to the repo
+  uv pip install ckatorch --group dev  # if you want to also install the dev dependencies
 
   # Otherwise
   pip install -e centered-kernel-alignment
-  pip install ckatorch[dev]  # same as for uv, remember to open a pull request afterwards
+  pip install ckatorch --group dev # same as for uv, remember to open a pull request afterwards
   ```
 
 Take a look at the `examples` directory to understand how to compute CKA in two basic scenarios.

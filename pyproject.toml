@@ -30,11 +30,10 @@ dependencies = [
     "tqdm>=4.66.3",
 ]
 
-
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "pre-commit>=4.2.0",
-    "ruff>=0.12.7",
+    "pre-commit>=4.3.0",
+    "ruff>=0.12.9",
 ]
 
 [project.urls]
