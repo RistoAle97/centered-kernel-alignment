@@ -63,10 +63,13 @@ def plot_cka(
     vmax = max(vmax, torch.max(cka_matrix).item()) if vmax is not None else vmax
 
     # Build the mask
-    mask = torch.tril(torch.ones_like(cka_matrix, dtype=torch.bool), diagonal=-1) if show_half_heatmap else None
+    if show_half_heatmap:
+        mask = torch.tril(torch.ones_like(cka_matrix, dtype=torch.bool), diagonal=-1).cpu().numpy()
+    else:
+        mask = None
 
     # Build the heatmap
-    ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask.cpu().numpy())
+    ax = sn.heatmap(cka_matrix.cpu(), vmin=vmin, vmax=vmax, annot=show_annotations, cmap=cmap, mask=mask)
     if invert_y_axis:
         ax.invert_yaxis()
 
