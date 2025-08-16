@@ -71,7 +71,7 @@ You can install the package:
 - _from PyPI_
   ```bash
   # Using uv
-  uv pip ckatorch
+  uv pip install ckatorch
 
   # Using pip
   pip install ckatorch
