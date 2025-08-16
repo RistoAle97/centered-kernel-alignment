@@ -67,8 +67,17 @@ source .venv/bin/activate  # if you are on Linux
 > [!NOTE]
 > This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch compiled with CUDA.
 
-You can install the package by either:
-- _using pip_
+You can install the package:
+- _from PyPI_
+  ```bash
+  # Using uv
+  uv pip ckatorch
+
+  # Using pip
+  pip install ckatorch
+  ```
+
+- _from this repo_
   ```bash
   # Using uv
   uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment
@@ -77,7 +86,7 @@ You can install the package by either:
   pip install git+https://github.com/RistoAle97/centered-kernel-alignment
   ```
 
-- _cloning the repository and installing the dependencies_
+- _by cloning the repository and installing the dependencies_
   ```bash
   git clone https://github.com/RistoAle97/centered-kernel-alignment
 
