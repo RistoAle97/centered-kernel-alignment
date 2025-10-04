@@ -1,0 +1,12 @@
+name: 📢 Question
+description: Ask a question about the package
+assignees: ["RistoAle97"]
+labels: ["question"]
+
+body:
+  - type: textarea
+    attributes:
+      label: Question
+      description: Describe your question.
+    validations:
+      required: true

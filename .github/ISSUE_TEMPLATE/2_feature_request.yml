@@ -1,0 +1,16 @@
+name: 🛠️ Feature Request
+description: Suggest a feature or an enhancement
+assignees: ["RistoAle97"]
+labels: ["enhancement"]
+
+body:
+  - type: textarea
+    attributes:
+      label: Summary
+      description: Please provide a concise summary of the features you would like to see, or enhancements you think would improve the package.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example
+      description: Provide an example of how the feature/enhancement would be used.

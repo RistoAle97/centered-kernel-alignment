@@ -1,0 +1,25 @@
+name: 🐛 Bug Report
+description: Create a report to help us reproduce and fix the bug
+assignees: "RistoAle97"
+labels: "bug"
+
+body:
+  - type: textarea
+    attributes:
+      label: Bug description
+      description: |
+        Please give an exhaustive description of what the bug is.
+
+        Minimal code snippets are highly appreciated and would help us greatly in reproducing the bug.
+      placeholder: |
+        A clear and exhaustive description of what the bug is.
+
+        ```python
+        # Sample code to reproduce the problem
+        ```
+
+        ```
+        The error message you got, with the full traceback.
+        ```
+    validations:
+      required: true
