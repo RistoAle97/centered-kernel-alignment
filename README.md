@@ -1,10 +1,14 @@
 <div align="center">
 
-# :robot: CKA PyTorch :robot:
+# 🤖 CKA PyTorch 🤖
 **CKA (Centered Kernel Alignment) in PyTorch.**
 
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://github.com/python/cpython)
 [![Pytorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://github.com/pytorch/pytorch)
+
+[![PyPI](https://img.shields.io/pypi/v/ckatorch.svg?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/ckatorch/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ckatorch.svg?style=for-the-badge&logo=python&logoColor=white)](https://pypi.org/project/ckatorch/)
+
 
 </div>
 
@@ -13,7 +17,7 @@
 
 ---
 
-## :black_nib: About
+## ✒️ About
 > [!NOTE]
 > Centered Kernel Alignment (CKA) [1] is a similarity index between representations of features in neural networks, based on the Hilbert-Schmidt Independence Criterion (HSIC) [2]. Given a set of examples, CKA compares the representations of examples passed through the layers that we want to compare.
 
@@ -44,12 +48,10 @@ with $K_i=X_iX_i^T$ and $L_i=Y_iY_i^T$, where $X_i \in \mathbb{R}^{m \times p_1}
 
 ---
 
-## :package: Installation
+## 📦 Installation
 This project requires python >= 3.10.
 
 ### Create a new venv
-> [!NOTE]
-> This will create a new virtual environment in the working directory under .venv.
 ```bash
 # If you have uv installed
 uv venv
@@ -103,17 +105,17 @@ Take a look at the `examples` directory to understand how to compute CKA in two 
 
 ---
 
-## :framed_picture:	Plots
+## 🖼️	Plots
 > [!NOTE]
 > The comparison makes more sense if the models share a common architecture.
 
 Model compared with itself             |  Different models compared
 :-------------------------:|:-------------------------:
-![Model compared with itself](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison_itself.png)  |  ![Model comparison](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/plots/model_comparison.png)
+![Model compared with itself](https://raw.githubusercontent.com/RistoAle97/centered-kernel-alignment/refs/heads/main/plots/model_comparison_itself.png)  |  ![Model comparison](https://raw.githubusercontent.com/RistoAle97/centered-kernel-alignment/refs/heads/main/plots/model_comparison.png)
 
 ---
 
-## :books: Bibliography
+## 📚 Bibliography
 [1] Kornblith, Simon, et al. ["Similarity of neural network representations revisited."](https://arxiv.org/abs/1905.00414) *International Conference on Machine Learning*. PMLR, 2019.
 
 [2] Wang, Tinghua, Xiaolu Dai, and Yuze Liu. ["Learning with Hilbert–Schmidt independence criterion: A review and new perspectives."](https://www.sciencedirect.com/science/article/pii/S0950705121008297) *Knowledge-based systems* 234 (2021): 107567.
@@ -127,5 +129,5 @@ This project is also based on the following repositories:
 
 ---
 
-## :memo: License
+## 📝 License
 This project is [MIT licensed](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/LICENSE).
