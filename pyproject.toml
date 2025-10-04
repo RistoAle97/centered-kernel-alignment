@@ -4,17 +4,20 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ckatorch"
+readme = "README.md"
+license = {file = "LICENSE"}
+version = "1.0.1"
+description = "Centered Kernel Alignment in PyTorch"
 authors = [
   {name = "Alessandro Ristori", email = "aleristori97@gmail.com"}
 ]
-version = "1.0.0"
-description = "Centered Kernel Alignment in PyTorch"
-readme = "README.md"
-license = {file = "LICENSE"}
 requires-python = ">=3.10"
-keywords = ["CKA", "Centered Kernel Aligment", "Neural Network Similarity", "Deep Learning"]
+keywords = ["CKA", "Centered Kernel Alignment", "Neural Network Similarity", "Deep Learning"]
 classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -22,22 +25,24 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
-    "matplotlib>=3.8.0",
-    "pyyaml>=6.0.2",
-    "safetensors>=0.4.2",
-    "seaborn>=0.12.2",
-    "torch>=2.3.1",
-    "tqdm>=4.66.3",
-]
-
-[dependency-groups]
-dev = [
-    "pre-commit>=4.3.0",
-    "ruff>=0.12.9",
+  "matplotlib>=3.8.0",
+  "pyyaml>=6.0.2",
+  "safetensors>=0.4.2",
+  "seaborn>=0.12.2",
+  "torch>=2.3.1",
+  "tqdm>=4.66.3",
 ]
 
 [project.urls]
+Homepage = "https://github.com/RistoAle97/centered-kernel-alignment"
 Repository = "https://github.com/RistoAle97/centered-kernel-alignment"
+Issues = "https://github.com/RistoAle97/centered-kernel-alignment/issues"
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.3.0",
+  "ruff>=0.12.9",
+]
 
 [tool.ruff]
 line-length = 120
@@ -46,14 +51,18 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    "ARG", # Flake8 unused arguments
-    "D", # Pydocstyle errors
-    "E", # PEP8 errors
-    "F", # PEP8 formatting
-    "I", # Import sorting
-    "N", # PEP8 naming
-    "RUF", # Ruff specific rules
-    "UP", # Pyupgrade upgrades
+  "ARG", # flake8-unused-arguments
+  "B", # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "D", # pydocstyle errors
+  "E", # pycodestyle errors
+  "F", # pyflakes
+  "I", # isort
+  "N", # pep8-naming
+  "RUF", # ruff-specific rules
+  "SIM", # flake8-simplify
+  "TID",  # flake8-tidy-imports
+  "UP", # pyupgrade
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
@@ -71,7 +80,7 @@ docstring-code-format = true
 
 [tool.uv.sources]
 torch = [
-    {index = "pytorch-cu126"},
+  {index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
 ]
 
 [[tool.uv.index]]

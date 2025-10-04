@@ -81,7 +81,8 @@ class CKA:
         if len(layers) > 100:
             warn(
                 f"You passed {len(layers)} distinct layers, which is way too high. Consider passing only those"
-                f"layers whose features you are really interested about."
+                f"layers whose features you are really interested about.",
+                stacklevel=2,
             )
 
         # Copy the first model's layers if they are not passed
@@ -95,7 +96,8 @@ class CKA:
             if len(second_layers) > 100:
                 warn(
                     f"You passed {len(second_layers)} distinct layers for the second model, which is way too high."
-                    f"Consider passing only those layers whose features you are really interested about."
+                    f"Consider passing only those layers whose features you are really interested about.",
+                    stacklevel=2,
                 )
 
         # Dicts where the output of each layer (i.e.: the features) will be saved while using hooks
@@ -114,7 +116,10 @@ class CKA:
         else:
             second_name = second_name if second_name is not None else second_model.__repr__().split("(")[0]
             if first_name == second_name:
-                warn(f"Both models are called {first_name}. This may cause confusion when analyzing the results.")
+                warn(
+                    f"Both models are called {first_name}. This may cause confusion when analyzing the results.",
+                    stacklevel=2,
+                )
 
         # Set up the models info
         first_name = re.sub("[^0-9a-zA-Z_]+", "", first_name.replace(" ", "_"))
@@ -194,7 +199,10 @@ class CKA:
             )
 
         if not isinstance(dataloader.sampler, RandomSampler):
-            warn("We suggest setting 'shuffle=True' in your dataloader in order to have a less biased computation.")
+            warn(
+                "We suggest setting 'shuffle=True' in your dataloader in order to have a less biased computation.",
+                stacklevel=2,
+            )
 
         self.first_model.eval()
         self.second_model.eval()

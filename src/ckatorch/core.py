@@ -44,8 +44,8 @@ def cka_base(
     if method not in ["hsic", "fro_norm"]:
         raise ValueError("The chosen method must be either 'hsic' or 'fro_norm'.")
 
-    x = x.type(torch.float64) if not x.dtype == torch.float64 else x
-    y = y.type(torch.float64) if not y.dtype == torch.float64 else y
+    x = x.type(torch.float64) if x.dtype != torch.float64 else x
+    y = y.type(torch.float64) if y.dtype != torch.float64 else y
 
     # Build the Gram matrices by applying the kernel
     gram_x = linear_kernel(x) if kernel == "linear" else rbf_kernel(x, threshold)
@@ -80,8 +80,8 @@ def cka_batch(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         torch.Tensor: a float tensor in [0, 1] that is the CKA value between the two given tensors.
     """
-    x = x.type(torch.float64) if not x.dtype == torch.float64 else x
-    y = y.type(torch.float64) if not y.dtype == torch.float64 else y
+    x = x.type(torch.float64) if x.dtype != torch.float64 else x
+    y = y.type(torch.float64) if y.dtype != torch.float64 else y
 
     # Build the Gram matrices by applying the linear kernel
     gram_x = torch.bmm(x, x.transpose(1, 2))
