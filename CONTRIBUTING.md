@@ -22,9 +22,9 @@ pip install -e . --group dev
 It is advised to also install the pre-commit hooks in order to stop your commit if some check does not pass
 ```bash
 # Install the hooks
-pre-commit install
+prek install
 
 # Update the hooks if needed
-pre-commit autoupdate
+prek autoupdate
 ```
 You're now ready to apply your desired changes. Feel free to open a pull request after you have commited your changes :heart:.

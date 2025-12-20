@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "ckatorch"
 readme = "README.md"
 license = {file = "LICENSE"}
-version = "1.0.1"
+version = "1.0.2"
 description = "Centered Kernel Alignment in PyTorch"
 authors = [
   {name = "Alessandro Ristori", email = "aleristori97@gmail.com"}
@@ -40,7 +40,7 @@ Issues = "https://github.com/RistoAle97/centered-kernel-alignment/issues"
 
 [dependency-groups]
 dev = [
-  "pre-commit>=4.3.0",
+  "prek>=0.2.23",
   "ruff>=0.12.9",
 ]
 
