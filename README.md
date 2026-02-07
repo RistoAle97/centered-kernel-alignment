@@ -67,38 +67,25 @@ source .venv/bin/activate  # if you are on Linux
 
 ### Install the package
 > [!NOTE]
-> This will install <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>PyTorch compiled with CUDA.
+> Please refer to uv <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>[PyTorch integration](https://docs.astral.sh/uv/guides/integration/pytorch/#the-uv-pip-interface).
 
 You can install the package:
 - _from PyPI_
   ```bash
-  # Using uv
-  uv pip install ckatorch
-
-  # Using pip
-  pip install ckatorch
+  uv pip install ckatorch --torch-backend=auto
   ```
 
 - _from this repo_
   ```bash
-  # Using uv
-  uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment
-
-  # Using pip
-  pip install git+https://github.com/RistoAle97/centered-kernel-alignment
+  uv pip install git+https://github.com/RistoAle97/centered-kernel-alignment --torch-backend=auto
   ```
 
 - _by cloning the repository and installing the dependencies_
   ```bash
   git clone https://github.com/RistoAle97/centered-kernel-alignment
-
-  # If you have uv installed
-  uv pip install -e centered-kernel-alignment
+  cd centered-kernel-alignment
+  uv pip install -e . --torch-backend=auto
   uv pip install ckatorch --group dev  # if you want to also install the dev dependencies
-
-  # Otherwise
-  pip install -e centered-kernel-alignment
-  pip install ckatorch --group dev # same as for uv, remember to open a pull request afterwards
   ```
 
 Take a look at the `examples` directory to understand how to compute CKA in two basic scenarios.
