@@ -101,8 +101,8 @@ class CKA:
                 )
 
         # Dicts where the output of each layer (i.e.: the features) will be saved while using hooks
-        self.first_features: dict[str, torch.Tensor] = {}
-        self.second_features: dict[str, torch.Tensor] = {}
+        self._first_features: dict[str, torch.Tensor] = {}
+        self._second_features: dict[str, torch.Tensor] = {}
 
         # Insert a hook for each layer
         layers, second_layers = self._insert_hooks(first_model, second_model, layers, second_layers)
@@ -130,9 +130,9 @@ class CKA:
     def _hook(self, model: str, module_name: str, module: nn.Module, inp: torch.Tensor, out: torch.Tensor) -> None:
         del module, inp  # delete unused arguments so that we can pass the linter checks
         if model == "first":
-            self.first_features[module_name] = out.detach()
+            self._first_features[module_name] = out.detach()
         else:
-            self.second_features[module_name] = out.detach()
+            self._second_features[module_name] = out.detach()
 
     def _insert_hooks(
         self,
@@ -217,11 +217,10 @@ class CKA:
             for epoch in tqdm(range(epochs), desc="| Computing CKA |", total=epochs):
                 cka_epoch = torch.zeros(n, m, device=self.device)
                 for batch in tqdm(dataloader, desc=f"| Computing CKA epoch {epoch} |", total=num_batches, leave=False):
-                    self.first_features = {}
-                    self.second_features = {}
+                    self._first_features = {}
+                    self._second_features = {}
                     if f_extract is not None:
                         # Apply the provided function and put everything on the device
-                        f_extract = {} if f_extract is None else f_extract
                         batch = f_extract(batch, **f_args)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
@@ -237,12 +236,10 @@ class CKA:
                     # Do a forward pass for both models
                     _ = self.first_model(**batch)
                     _ = self.second_model(**batch)
-                    first_outputs = self.first_features
-                    second_outputs = self.second_features
 
                     # Compute the CKA values for each output pair
-                    for i, (_, x) in enumerate(first_outputs.items()):
-                        for j, (_, y) in enumerate(second_outputs.items()):
+                    for i, (_, x) in enumerate(self._first_features.items()):
+                        for j, (_, y) in enumerate(self._second_features.items()):
                             cka_epoch[i, j] = cka_batch(x, y)
 
                 cka_matrices.append(cka_epoch)
