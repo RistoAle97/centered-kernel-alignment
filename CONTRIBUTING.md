@@ -27,4 +27,9 @@ prek install
 # Update the hooks if needed
 prek autoupdate
 ```
+
+It is also advised to run the type checker before committing
+```bash
+ty check ckatorch
+```
 You're now ready to apply your desired changes. Feel free to open a pull request after you have commited your changes :heart:.
