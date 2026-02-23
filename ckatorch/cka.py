@@ -221,7 +221,7 @@ class CKA:
                     self._second_features = {}
                     if f_extract is not None:
                         # Apply the provided function and put everything on the device
-                        batch = f_extract(batch, **f_args)
+                        batch = f_extract(batch, **f_args) if f_args is not None else f_extract(batch)
                         batch = {f"{name}": batch_input.to(self.device) for name, batch_input in batch.items()}
                     elif isinstance(batch, list | tuple):
                         arg_method = self.first_model.forward

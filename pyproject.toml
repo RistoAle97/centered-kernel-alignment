@@ -43,6 +43,7 @@ Issues = "https://github.com/RistoAle97/centered-kernel-alignment/issues"
 dev = [
   "prek>=0.3.2",
   "ruff>=0.15.0",
+  "ty>=0.0.18",
 ]
 
 [tool.ruff]
