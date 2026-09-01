@@ -31,7 +31,7 @@ $$HSIC_0(K, L) = \frac{tr(KHLH)}{(n - 1)^2},$$
 
 where $H = I_n - \frac{1}{n}J_n$ is the centering matrix and $J_n$ is an $n \times n$ matrix filled with ones. Finally, to obtain the CKA value we only need to normalize $HSIC_0$
 
-$$CKA(K, L) = \frac{HSIC(K, L)}{\sqrt{HSIC(K, K) HSIC(L, L)}}.$$
+$$CKA(K, L) = \frac{HSIC_0(K, L)}{\sqrt{HSIC_0(K, K) HSIC_0(L, L)}}.$$
 
 > [!NOTE]
 > However, naive computation of linear CKA (i.e.: the previous equation) requires maintaining the activations across the entire dataset in memory, which is challenging for wide and deep networks [3].
