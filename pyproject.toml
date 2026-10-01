@@ -11,18 +11,18 @@ description = "Centered Kernel Alignment in PyTorch"
 authors = [
   {name = "Alessandro Ristori", email = "aleristori97@gmail.com"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["CKA", "Centered Kernel Alignment", "Neural Network Similarity", "Deep Learning"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
@@ -41,15 +41,15 @@ Issues = "https://github.com/RistoAle97/centered-kernel-alignment/issues"
 
 [dependency-groups]
 dev = [
-  "prek>=0.3.2",
-  "ruff>=0.15.0",
-  "ty>=0.0.18",
+  "prek>=0.5.4",
+  "ruff>=0.16.9",
+  "ty>=0.0.84",
 ]
 
 [tool.ruff]
 line-length = 120
 output-format = "grouped"
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [

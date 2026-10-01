@@ -1,7 +1,7 @@
 # Contributing
 If you want to contribute to the source code:
 
-1. Fork the repository on :simple-github:.
+1. Fork the repository.
 1. Create a new branch where to commit your changes.
 1. Clone your branch locally.
     ```bash
