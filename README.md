@@ -15,8 +15,6 @@
 > [!WARNING]
 > This repository has been built mainly for personal and academic use since <img height="15" width="15" src="https://cdn.simpleicons.org/pytorch"/>[Captum](https://github.com/pytorch/captum) still needs to implement its variant of CKA. As such, do not expect this project to work for every model.
 
----
-
 ## ✒️ About
 > [!NOTE]
 > Centered Kernel Alignment (CKA) [1] is a similarity index between representations of features in neural networks, based on the Hilbert-Schmidt Independence Criterion (HSIC) [2]. Given a set of examples, CKA compares the representations of examples passed through the layers that we want to compare.
@@ -45,8 +43,6 @@ where $\tilde{K}$ and $\tilde{L}$ are obtained by setting the diagonal entries o
 $$CKA_{minibatch}=\frac{\frac{1}{k} \displaystyle\sum_{i=1}^{k} HSIC_1(K_i, L_i)}{\sqrt{\frac{1}{k} \displaystyle\sum_{i=1}^{k} HSIC_1(K_i, K_i)}\sqrt{\frac{1}{k} \displaystyle\sum_{i=1}^{k} HSIC_1(L_i, L_i)}},$$
 
 with $K_i=X_iX_i^T$ and $L_i=Y_iY_i^T$, where $X_i \in \mathbb{R}^{m \times p_1}$ and $Y_i \in \mathbb{R}^{m \times p_2}$ are now matrices containing activations of the $i^{th}$ minibatch of $m$ examples sampled without replacement [3].
-
----
 
 ## 📦 Installation
 This project requires python >= 3.10.
@@ -90,8 +86,6 @@ You can install the package:
 
 Take a look at the `examples` directory to understand how to compute CKA in two basic scenarios.
 
----
-
 ## 🖼️	Plots
 > [!NOTE]
 > The comparison makes more sense if the models share a common architecture.
@@ -99,8 +93,6 @@ Take a look at the `examples` directory to understand how to compute CKA in two 
 Model compared with itself             |  Different models compared
 :-------------------------:|:-------------------------:
 ![Model compared with itself](https://raw.githubusercontent.com/RistoAle97/centered-kernel-alignment/refs/heads/main/plots/model_comparison_itself.png)  |  ![Model comparison](https://raw.githubusercontent.com/RistoAle97/centered-kernel-alignment/refs/heads/main/plots/model_comparison.png)
-
----
 
 ## 📚 Bibliography
 [1] Kornblith, Simon, et al. ["Similarity of neural network representations revisited."](https://arxiv.org/abs/1905.00414) *International Conference on Machine Learning*. PMLR, 2019.
@@ -113,8 +105,6 @@ This project is also based on the following repositories:
 - [representation_similarity](https://github.com/google-research/google-research/tree/master/representation_similarity) (original implementation).
 - [PyTorch-Model-Compare](https://github.com/AntixK/PyTorch-Model-Compare) (nice PyTorch implementation that employs hooks).
 - [CKA.pytorch](https://github.com/numpee/CKA.pytorch) (minibatch version of CKA and useful batched implementation of $HSIC_1$).
-
----
 
 ## 📝 License
 This project is [MIT licensed](https://github.com/RistoAle97/centered-kernel-alignment/blob/main/LICENSE).
